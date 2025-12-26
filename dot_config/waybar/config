@@ -45,7 +45,8 @@
             "class<kitty>": "",
             "class<vivaldi-stable>": " ",
             "class<Bitwarden>": " ",
-	    "title<.*YouTube Music>": " "
+	    "title<.*YouTube Music>": " ",
+            "class<legcord>": " "
 	},
 	"window-rewrite-default": " "
     },
