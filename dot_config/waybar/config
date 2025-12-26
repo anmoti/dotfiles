@@ -11,12 +11,13 @@
     "modules-left": [
         "custom/launcher",
         "sway/workspaces",
-        "sway/mode",
+        "hyprland/workspaces",
+	"sway/mode",
         "sway/window"
     ],
 
     "custom/launcher": {
-        "format":"<span size='x-large'></span>",
+        "format":"<span size='x-large'></span>",
         "on-click": "exec nwg-drawer",
         "tooltip": false
     },
@@ -35,6 +36,18 @@
             "9": "9",
             "10": "10"
         }
+    },
+
+    "hyprland/workspaces": {
+	"format": "{icon} {windows}",
+        "window-rewrite": {
+	    "title<.*nvim>": " ",
+            "class<kitty>": "",
+            "class<vivaldi-stable>": " ",
+            "class<Bitwarden>": " ",
+	    "title<.*YouTube Music>": " "
+	},
+	"window-rewrite-default": " "
     },
 
     "sway/mode": {
