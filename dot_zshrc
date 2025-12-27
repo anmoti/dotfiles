@@ -1,5 +1,8 @@
 source ~/.profile
 
+export EDITOR=nvim
+export VISUAL=nvim
+
 # Load omz envs
 ZSH="/usr/share/oh-my-zsh"
 ZSH_CUSTOM="/usr/share/zsh"
