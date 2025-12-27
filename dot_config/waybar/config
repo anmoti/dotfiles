@@ -1,19 +1,15 @@
 {
-    "layer": "top", // Waybar at top layer
-    "position": "top", // Waybar position (top|bottom|left|right)
-    // "height": 30, // Auto-height is used when commented
-    // "width": 1280, // Full screen width when commented
-    "spacing": 16, // Gaps between modules (in px)
-    // See `man waybar` for more configuration options
+    "layer": "bottom",
+    "position": "top",
+    "spacing": 10,
 
-// Configuration - modules-left
-
+    // Left modules
     "modules-left": [
         "custom/launcher",
         "sway/workspaces",
         "hyprland/workspaces",
-	"sway/mode",
-        "sway/window"
+        "sway/window",
+	"hyprland/window"
     ],
 
     "custom/launcher": {
@@ -42,25 +38,20 @@
 	"format": "{icon} {windows}",
         "window-rewrite": {
 	    "title<.*nvim>": " ",
-            "class<kitty>": "",
+            "class<kitty>": " ",
+	    "class<org.kde.dolphin>": " ",
             "class<vivaldi-stable>": " ",
             "class<Bitwarden>": " ",
 	    "title<.*YouTube Music>": " ",
-            "class<legcord>": " "
+            "class<legcord>": " ",
+	    "class<org.pulseaudio.pavucontrol": " "
 	},
 	"window-rewrite-default": " "
     },
 
-    "sway/mode": {
-        "format": "<span style=\"italic\">{}</span>",
-        "tooltip": false
-    },
+    "sway/window": {},
 
-    "sway/window": {
-        "format": "{}",
-        //"all-outputs": true, // Active window shows only on active display when commented
-        "max-length": 120
-    },
+    "hyprland/window": {},
 
 // Configuration - modules-center
     
@@ -70,9 +61,8 @@
 
     "network": {
         "format-disabled": " Disabled",
-        "format-wifi": " {bandwidthDownBits:>} 󰶡 {bandwidthUpBits:>} 󰶣",
-        "tooltip-format-wifi": "{essid}",
-        "format-ethernet": "󰈀 {bandwidthDownBits:>} 󰶡 {bandwidthUpBits:>} 󰶣",
+        "format": "{bandwidthDownBits:>} {bandwidthUpBits:>}",
+        "tooltip-format-wifi": "ESS ID: {essid}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
         "format-disconnected": " Disconnected",
         "on-click": "footclient -T waybar_nmtui -e nmtui",
@@ -196,5 +186,5 @@
         "format":"⏻",
         "on-click": "exec ~/.config/sway/scripts/power_menu.sh",
         "tooltip": false
-    },
+    }
 }

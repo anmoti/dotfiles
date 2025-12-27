@@ -6,12 +6,14 @@
  *
  * =========================================================================== */
 
-/* -----------------------------------------------------------------------------
- * Keyframes
- * -------------------------------------------------------------------------- */
+@define-color highlight    #685878 ;
+@define-color primary-bg   rgba( 42,  42,  42, 0.5); /* #2a2a2a */
+@define-color primary-text rgba(212, 212, 212,   1); /* #d4d4d4 */
+@define-color active-bg    rgba(200, 255, 200, 0.7); /* #c8ffc8 */
+@define-color active-text  rgba( 40,  51,  40,   1); /* #283328 */
+@define-color warning-bg   rgba(255, 200, 200, 0.7); /* #ffc8de */
+@define-color warning-text rgba( 51,  40,  40,   1); /* #33282c */
 
-@define-color highlight #685878 ;
-@define-color base1  #19191e ;
 
 @keyframes blink-warning {
     70% {
@@ -35,85 +37,61 @@
     }
 }
 
-/* -----------------------------------------------------------------------------
- * Base styles
- * -------------------------------------------------------------------------- */
-
 /* Reset all styles */
 * {
-    border: none;
-    border-radius: 0;
-    min-height: 0;
-    margin: 1px;
-    padding: 0;
+    all: unset;
 }
 
-/* The whole bar */
 #waybar {
-    background: transparent;
-    color: #e3e3ea;
-    background-color: @base1;
+    color: @primary-text;
+    background-color: @primary-bg;
     font-family: JetBrainsMono;
-    font-size: 13px;
+    font-size: 16px;
 }
-
-/* Every modules */
-#mode,
-#network,
-#custom-keyboard-layout,
-#idle_inhibitor,
-#cpu,
-#memory,
-#backlight,
-#pulseaudio,
-#battery,
-#clock,
-#tray {
-    padding:0.5rem 0.6rem;
-    margin: 1px 0px;
-}
-
-/* -----------------------------------------------------------------------------
- * Module styles
- * -------------------------------------------------------------------------- */
 
 #custom-launcher {
-    margin-left:15px;
-    margin-right:10px;
-}
-
-#workspaces {
-    font-size:13px;
+    padding: 0 0.5rem;
 }
 
 #workspaces button {
-    border-radius: 5px;
-    color: #eceff4;
-    padding: 1px 6px;
-    margin-right: 2px;
-    margin-left: 2px;
+    color: @primary-text;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 0 0.5rem;
+    margin-top: 0.2rem;
 }
 
-#workspaces button.focused {
-    border: 1px solid #d8dee9;
+#workspaces button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#workspaces button.active {
+    color: @active-text;
+    background-color: @active-bg;
 }
 
 #workspaces button.urgent {
-    border-color: #c9545d;
-    color: #c9545d;
-}
-
-#mode {
-    background: @highlight;
-    border-bottom: 3px transparent;
-    color:white;
-    margin-left: 5px;
-    padding: 7px;
+    color: @warning-text;
+    background-color: @warning-bg;
 }
 
 #window {
+    font-size: 0.8rem;
     font-weight: bold;
+    border-bottom: 1px solid currentColor;
+    padding: 0 0.3rem;
+    margin: 0.2rem;
 }
+
+#tray {
+    padding: 0.5rem 0;
+}
+
+#custom-power {
+    padding: 0 0.7rem;
+    font-size: 1.2rem;
+}
+
+
 
 #network.disconnected {
     color: orange;
@@ -177,10 +155,4 @@
 #battery.critical.discharging {
     animation-name: blink-critical;
     animation-duration: 2s;
-}
-
-#custom-power {
-    margin-left:15px;
-    margin-right:15px;
-    font-size:15px;
 }
