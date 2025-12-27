@@ -1,0 +1,21 @@
+source ~/.profile
+
+# Load omz envs
+ZSH="/usr/share/oh-my-zsh"
+ZSH_CUSTOM="/usr/share/zsh"
+
+# Setup zsh-completions
+fpath+="${ZSH_CUSTOM}/site-functions"
+autoload -U compinit && compinit
+
+# Setup oh-my-zsh
+plugins=(git)
+source "$ZSH/oh-my-zsh.sh"
+
+# Setup oh-my-posh
+eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
+
+# Setup zsh plugins
+source ${ZSH_CUSTOM}/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
+source ${ZSH_CUSTOM}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
