@@ -1,9 +1,10 @@
+# zmodload zsh/zprof
 zmodload zsh/datetime
 START_TIME=$EPOCHREALTIME
 
 source ~/.profile
 
-export PATH="~/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 export EDITOR=nvim
 export VISUAL=nvim
@@ -19,14 +20,29 @@ fpath+="${ZSH_CUSTOM}/site-functions"
 plugins=(git)
 source "$ZSH/oh-my-zsh.sh"
 
+
+# Setup eval cache
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/zsh_init"
+[[ ! -d "$cache_dir" ]] && mkdir -p "$cache_dir"
+
+
 # Setup oh-my-posh
-eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
+if [[ ! -f "$cache_dir/omp.zsh" ]]; then
+  oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json > "$cache_dir/omp.zsh"
+fi
+source "$cache_dir/omp.zsh"
+
 
 # Setup zoxide
-eval "$(zoxide init zsh)"
+if [[ ! -f "$cache_dir/zoxide.zsh" ]]; then
+  zoxide init zsh > "$cache_dir/zoxide.zsh"
+fi
+source "$cache_dir/zoxide.zsh"
 
 
 # Setup zsh plugins
+DISABLE_MAGIC_FUNCTIONS=true
+
 source ${ZSH_CUSTOM}/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
 source ${ZSH_CUSTOM}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -88,13 +104,14 @@ conf() {
   fi
 }
 
+alias reload='exec zsh'
+
 # 起動時間の表示
 if [[ -n $START_TIME ]]; then
   export END_TIME=$EPOCHREALTIME
   export ZSH_STARTUP_TIME=$(printf "%.3f" $(( END_TIME - START_TIME )))
 
   echo " 󰥔 Shell loaded in ${ZSH_STARTUP_TIME}s"
-
 
   unset START_TIME END_TIME
 fi
