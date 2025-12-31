@@ -1,5 +1,7 @@
 source ~/.profile
 
+export PATH="~/.local/bin:$PATH"
+
 export EDITOR=nvim
 export VISUAL=nvim
 
@@ -9,7 +11,6 @@ ZSH_CUSTOM="/usr/share/zsh"
 
 # Setup zsh-completions
 fpath+="${ZSH_CUSTOM}/site-functions"
-autoload -U compinit && compinit
 
 # Setup oh-my-zsh
 plugins=(git)
@@ -18,7 +19,69 @@ source "$ZSH/oh-my-zsh.sh"
 # Setup oh-my-posh
 eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
 
+# Setup zoxide
+eval "$(zoxide init zsh)"
+
+
 # Setup zsh plugins
 source ${ZSH_CUSTOM}/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh
 source ${ZSH_CUSTOM}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+
+# 設定ファイルを開く頻度を記録して fzf で選択
+conf() {
+  local history_file="$HOME/.config/conf_history"
+  local query="$1"
+
+  touch "$history_file"
+
+  # 候補リストの作成
+  local selected=$( (
+    cat "$history_file" 2>/dev/null
+    find ~/.config ~/.zshrc -maxdepth 4 -type f \
+      -not -path "*/.config/micro/*"            \
+      -not -path "*/.config/vivaldi/*"          \
+                                                \
+      -not -path "*/.git/*"                     \
+      -not -path "*/Shared Dictionary/*"        \
+      -not -path "*/Service Worker/*"           \
+      -not -path "*/VideoDecodeStats/*"         \
+      -not -path "*/Crashpad/*"                 \
+      -not -path "*/IndexedDB/*"                \
+      -not -path "*/Dictionaries/*"             \
+      -not -path "*/shared_proto_db/*"          \
+      -not -path "*/*[Cc]ache*/*"               \
+      -not -path "*/*Storage/*"                 \
+                                                \
+      -not -name "Network Persistent State"     \
+      -not -name "TransportSecurity"            \
+      -not -name "Preferences"                  \
+      -not -name "Trust Tokens*"                \
+      -not -name "SharedStorage*"               \
+      -not -name "Cookies*"                     \
+      -not -name "DIPS*"                        \
+      -not -name "electron-log-preload.js"      \
+      -not -name "*cache*"                      \
+                                                \
+      -not -name "*.log"                        \
+      -not -name "*.png"                        \
+      -not -name "*.jpg"                        \
+  ) | awk '!a[$0]++' | fzf                      \
+    --query "$query"                            \
+    --select-1                                  \
+    --height 40%                                \
+    --layout=reverse                            \
+    --border                                    \
+    --preview "bat --color=always --style=numbers {}" )
+
+  # 履歴を保存してファイルを開く
+  if [[ -n "$selected" ]]; then
+    local old_history=$(grep -v -F "$selected" "$history_file" 2>/dev/null)
+    local tmp_history=$(printf "%s\n%s" "$selected" "$old_history" | head -n 100)
+    echo "$tmp_history" > "$history_file"
+
+    $EDITOR "$selected"
+  fi
+}
+
