@@ -1,3 +1,6 @@
+zmodload zsh/datetime
+START_TIME=$EPOCHREALTIME
+
 source ~/.profile
 
 export PATH="~/.local/bin:$PATH"
@@ -84,4 +87,15 @@ conf() {
     $EDITOR "$selected"
   fi
 }
+
+# 起動時間の表示
+if [[ -n $START_TIME ]]; then
+  export END_TIME=$EPOCHREALTIME
+  export ZSH_STARTUP_TIME=$(printf "%.3f" $(( END_TIME - START_TIME )))
+
+  echo " 󰥔 Shell loaded in ${ZSH_STARTUP_TIME}s"
+
+
+  unset START_TIME END_TIME
+fi
 
