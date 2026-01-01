@@ -38,15 +38,14 @@
 	"format": "{icon} {windows}",
         "window-rewrite": {
 	    "title<.*nvim>": " ",
-            "class<kitty>": " ",
-	    "class<org.kde.dolphin>": " ",
-            "class<vivaldi-stable>": " ",
-            "class<Bitwarden>": " ",
-	    "title<.*YouTube Music>": " ",
-            "class<legcord>": " ",
-	    "class<org.pulseaudio.pavucontrol": " "
 	},
-	"window-rewrite-default": " "
+	"workspace-taskbar": {
+            "enable": true,
+	    "ignore-list": [
+                "RemoteApp Marker Window",
+		"^$"
+	    ]
+	}
     },
 
     "sway/window": {},
