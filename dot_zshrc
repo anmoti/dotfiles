@@ -5,6 +5,7 @@ START_TIME=$EPOCHREALTIME
 source ~/.profile
 
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.volta/bin:$PATH"
 
 export EDITOR=nvim
 export VISUAL=nvim
@@ -100,6 +101,7 @@ conf() {
     local tmp_history=$(printf "%s\n%s" "$selected" "$old_history" | head -n 100)
     echo "$tmp_history" > "$history_file"
 
+    echo "Opening $selected with $EDITOR"
     $EDITOR "$selected"
   fi
 }
