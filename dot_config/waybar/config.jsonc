@@ -36,9 +36,6 @@
 
     "hyprland/workspaces": {
 	"format": "{icon} {windows}",
-        "window-rewrite": {
-	    "title<.*nvim>": " ",
-	},
 	"workspace-taskbar": {
             "enable": true,
 	    "ignore-list": [
