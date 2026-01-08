@@ -25,6 +25,7 @@ vim.g.maplocalleader = "\\"
 require("lazy").setup({
   spec = {
     { "catppuccin/nvim",   name = "catppuccin", priority = 1000 },
+    { "fladson/vim-kitty", enabled = vim.fn.has("nvim-0.12") == 0, ft = "kitty" },
 },
 
   -- Configure any other settings here. See the documentation for more details.
