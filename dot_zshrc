@@ -59,6 +59,7 @@ conf() {
   # 候補リストの作成
   local selected=$( (
     cat "$history_file" 2>/dev/null
+    chezmoi list --path-style absolute
     find ~/.config ~/.zshrc -maxdepth 4 -type f \
       -not -path "*/.config/micro/*"            \
       -not -path "*/.config/vivaldi/*"          \
@@ -86,7 +87,7 @@ conf() {
                                                 \
       -not -name "*.log"                        \
       -not -name "*.png"                        \
-      -not -name "*.jpg"                        \
+      -not -name "*.jpg"
   ) | awk '!a[$0]++' | fzf                      \
     --query "$query"                            \
     --select-1                                  \
@@ -101,8 +102,13 @@ conf() {
     local tmp_history=$(printf "%s\n%s" "$selected" "$old_history" | head -n 100)
     echo "$tmp_history" > "$history_file"
 
-    echo "Opening $selected with $EDITOR"
-    $EDITOR "$selected"
+    if [[ -n "$(chezmoi managed "$selected" 2> /dev/null)" ]]; then
+      echo "Opening managed file $selected with chezmoi edit"
+      chezmoi edit --apply "$selected"
+    else
+      echo "Opening $selected with $EDITOR"
+      $EDITOR "$selected"
+    fi
   fi
 }
 
