@@ -2,12 +2,12 @@ require("config.lazy")
 
 vim.cmd.colorscheme "catppuccin-mocha"
 
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
-	pattern = "*config/waybar/config",
-	command = "setfiletype jsonc",
-})
+vim.filetype.add({
+  pattern = {
+    -- for sway
+    [".*/sway/config.*"] = "swayconfig",
 
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
-	pattern = "*config/sway/config*",
-	command = "setfiletype swayconfig",
+    -- for kitty
+    [".*/kitty/.*%.conf"] = "kitty",
+  },
 })
