@@ -4,10 +4,8 @@ vim.cmd.colorscheme "catppuccin-mocha"
 
 vim.filetype.add({
   pattern = {
-    -- for sway
-    [".*/sway/config.*"] = "swayconfig",
-
-    -- for kitty
-    [".*/kitty/.*%.conf"] = "kitty",
+    [".*dot_zshrc"]		= "zsh",
+    [".*config/sway/config.*"]	= "swayconfig",
+    [".*config/kitty/.*%.conf"]	= "kitty",
   },
 })
