@@ -1,4 +1,6 @@
-vim.cmd(":colorscheme vim")
+require("config.lazy")
+
+vim.cmd.colorscheme "catppuccin-mocha"
 
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
 	pattern = "*config/waybar/config",
