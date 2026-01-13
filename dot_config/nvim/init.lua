@@ -1,11 +1,16 @@
 require("config.lazy")
+require("config.autocmd")
 
-vim.cmd.colorscheme "catppuccin-mocha"
+vim.opt.number = true
+vim.opt.relativenumber = true
+
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
 
 vim.filetype.add({
   pattern = {
-    [".*dot_zshrc"]		= "zsh",
-    [".*config/sway/config.*"]	= "swayconfig",
-    [".*config/kitty/.*%.conf"]	= "kitty",
+    [".*config/sway/config.*"] = "swayconfig",
+    [".*config/kitty/.*%.conf"] = "kitty",
   },
 })
