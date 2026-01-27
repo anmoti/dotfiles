@@ -42,7 +42,7 @@
     all: unset;
 }
 
-#waybar {
+#waybar, tooltip, menu {
     color: @primary-text;
     background-color: @primary-bg;
     font-family: JetBrainsMono;

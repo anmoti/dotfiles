@@ -28,17 +28,10 @@ cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/zsh_init"
 
 
 # Setup oh-my-posh
-if [[ ! -f "$cache_dir/omp.zsh" ]]; then
-  oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json > "$cache_dir/omp.zsh"
-fi
-source "$cache_dir/omp.zsh"
-
+eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
 
 # Setup zoxide
-if [[ ! -f "$cache_dir/zoxide.zsh" ]]; then
-  zoxide init zsh > "$cache_dir/zoxide.zsh"
-fi
-source "$cache_dir/zoxide.zsh"
+eval "$(zoxide init zsh)"
 
 
 # Setup zsh plugins
@@ -120,6 +113,17 @@ conf() {
 }
 
 alias reload='exec zsh'
+
+home-manager-list() {
+  nix path-info -r --json --json-format 2 $(readlink -f ~/.local/state/nix/profiles/home-manager) | \
+  jq -r '
+    .info | to_entries | map(.value + {path: .key}) | .[] |
+    . + (.path | sub("^[a-z0-9]{32}-"; "") | capture("^(?<name>.*)-(?=[0-9])(?<ver>.*)$")) |
+    "\(.name)|\(.ver)|\(.narSize)"
+  ' | \
+  awk -F '|' '{printf "%-45s %-20s %10.2f MB\n", $1, $2, $3/1024/1024}' | \
+  sort
+}
 
 # 起動時間の表示
 if [[ -n $START_TIME ]]; then
