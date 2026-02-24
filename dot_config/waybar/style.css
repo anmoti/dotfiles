@@ -6,14 +6,11 @@
  *
  * =========================================================================== */
 
+@import "catppuccin-mocha.theme.css";
+
 @define-color highlight    #685878 ;
-@define-color primary-bg   rgba( 42,  42,  42, 0.5); /* #2a2a2a */
-@define-color primary-text rgba(212, 212, 212,   1); /* #d4d4d4 */
-@define-color active-bg    rgba(200, 255, 200, 0.7); /* #c8ffc8 */
-@define-color active-text  rgba( 40,  51,  40,   1); /* #283328 */
 @define-color warning-bg   rgba(255, 200, 200, 0.7); /* #ffc8de */
 @define-color warning-text rgba( 51,  40,  40,   1); /* #33282c */
-
 
 @keyframes blink-warning {
     70% {
@@ -28,12 +25,12 @@
 
 @keyframes blink-critical {
     70% {
-      color: white;
+      color: @text;
     }
 
     to {
-        color: white;
-        background-color: red;
+        color: @text;
+        background-color: @red;
     }
 }
 
@@ -43,10 +40,22 @@
 }
 
 #waybar, tooltip, menu {
-    color: @primary-text;
-    background-color: @primary-bg;
-    font-family: JetBrainsMono;
-    font-size: 16px;
+  border: 2px solid @surface0;
+  border-radius: 5px;
+  color: @text;
+  font-size: 16px;
+  font-family: JetBrainsMono;
+  background-color: alpha(@base, 0.85);
+}
+
+#waybar {
+  border-radius: 0 0 5px 5px;
+  border-top: none;
+}
+
+menu {
+  padding: 5px;
+  border-color: @surface1;
 }
 
 #custom-launcher {
@@ -54,19 +63,18 @@
 }
 
 #workspaces button {
-    color: @primary-text;
     border-radius: 0.5rem 0.5rem 0 0;
     padding: 0 0.5rem;
     margin-top: 0.2rem;
 }
 
 #workspaces button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: alpha(@subtext0, 0.2);
 }
 
 #workspaces button.active {
-    color: @active-text;
-    background-color: @active-bg;
+    color: @surface0;
+    background-color: @teal;
 }
 
 #workspaces button.urgent {
@@ -102,7 +110,7 @@
 }
 
 #cpu.critical {
-    color: red;
+    color: @red;
 }
 
 #memory {
@@ -144,7 +152,7 @@
 }
 
 #battery.critical {
-    color: red;
+    color: @maroon;
 }
 
 #battery.warning.discharging {
