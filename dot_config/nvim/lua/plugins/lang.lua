@@ -58,18 +58,6 @@ return {
           pcall(vim.treesitter.start)
         end,
       })
-
-      vim.api.nvim_create_autocmd("FileType", {
-        group = vim.api.nvim_create_augroup("treesitter-utils", {}),
-        callback = function()
-          -- インデント
-          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-          -- 折りたたみ
-          vim.wo.foldmethod = "expr"
-          vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-          vim.wo.foldenable = false
-        end,
-      })
     end,
   },
   {
@@ -82,6 +70,9 @@ return {
         lua_ls = {
           settings = {
             Lua = {
+              workspace = {
+                library = vim.api.nvim_get_runtime_file("", true),
+              },
               completion = {
                 callSnippet = "Replace",
               },
@@ -97,31 +88,5 @@ return {
         vim.lsp.enable(server)
       end
     end,
-  },
-  {
-    "mason-org/mason.nvim",
-    opts = {},
-  },
-  {
-    "mason-org/mason-lspconfig.nvim",
-    event = { "BufReadPost", "BufWritePost", "BufNewFile" },
-    dependencies = {
-      "neovim/nvim-lspconfig",
-      "mason-org/mason.nvim",
-    },
-    ---@module "mason-lspconfig"
-    ---@type MasonLspconfigSettings
-    opts = {
-      automatic_enable = false,
-      ensure_installed = {
-        "lua_ls",
-      },
-    },
-  },
-  {
-    "fladson/vim-kitty",
-    -- neovim 0.12 より kittyのsyntax highlight が標準搭載されるらしいので
-    enabled = vim.fn.has("nvim-0.12") == 0,
-    ft = "kitty",
   },
 }

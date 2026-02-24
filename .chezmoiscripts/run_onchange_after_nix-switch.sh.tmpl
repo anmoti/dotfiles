@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# hash: {{ include "dot_config/home-manager/home.nix" | sha256sum }}
+nix flake update --flake ~/.config/home-manager
+nix run nixpkgs#home-manager -- switch --flake ~/.config/home-manager
+

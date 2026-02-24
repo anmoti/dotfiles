@@ -1,0 +1,15 @@
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.cursorline = true
+
+vim.opt.laststatus = 3
+vim.opt.splitkeep = "screen"
+
+vim.opt.autoindent = true
+vim.opt.smartindent = true
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+
+vim.opt.list = true
+vim.opt.listchars = { tab = ">.", trail = "_" }

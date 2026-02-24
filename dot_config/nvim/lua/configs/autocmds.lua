@@ -17,3 +17,15 @@ vim.api.nvim_create_autocmd("InsertLeave", {
     end
   end,
 })
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function ()
+    local arg = vim.fn.argv(0)
+    if arg == nil or arg == "" then return end
+
+    local path = vim.fn.fnamemodify(arg, ":p")
+    local target_dir = vim.fn.isdirectory(path) == 1 and path or vim.fn.fnamemodify(path, ":h")
+
+    vim.fn.chdir(target_dir)
+  end
+})

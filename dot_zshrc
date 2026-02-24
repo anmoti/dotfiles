@@ -43,74 +43,82 @@ source ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 
 # 設定ファイルを開く頻度を記録して fzf で選択
-conf() {
-  local history_file="$HOME/.config/conf_history"
-  local query="$1"
-
-  touch "$history_file"
-
-  # 候補リストの作成
-  local selected=$(
-    (
-      cat "$history_file" 2> /dev/null
-      chezmoi list --path-style absolute
-      find "$HOME/.config" -maxdepth 4 -type f			\
-        -not -path "*/.config/micro/*"				\
-        -not -path "*/.config/vivaldi/*"			\
-        							\
-        -not -path "*/.git/*"					\
-        -not -path "*/Shared Dictionary/*"			\
-        -not -path "*/Service Worker/*"				\
-        -not -path "*/VideoDecodeStats/*"			\
-        -not -path "*/Crashpad/*"				\
-        -not -path "*/IndexedDB/*"				\
-        -not -path "*/Dictionaries/*"				\
-        -not -path "*/shared_proto_db/*"			\
-        -not -path "*/*[Cc]ache*/*"				\
-        -not -path "*/*Storage/*"				\
-        							\
-        -not -name "Network Persistent State"			\
-        -not -name "TransportSecurity"				\
-        -not -name "Preferences"				\
-        -not -name "Trust Tokens*"				\
-        -not -name "SharedStorage*"				\
-        -not -name "Cookies*"					\
-        -not -name "DIPS*"					\
-        -not -name "electron-log-preload.js"			\
-        -not -name "*cache*"					\
-        							\
-        -not -name "*.log"					\
-        -not -name "*.png"					\
-        -not -name "*.jpg"
-    )								\
-    | sed '/^$/d'						\
-    | awk '!a[$0]++'						\
-    | fzf							\
-        --query		"$query"				\
-        --scheme	default					\
-        --tiebreak	index					\
-        --select-1						\
-        --height	"40%"					\
-        --layout	reverse					\
-        --border						\
-        --preview	"bat --color=always --style=numbers {}"
-  )
-
-  # 履歴を保存してファイルを開く
-  if [[ -n "$selected" ]]; then
-    local old_history=$(grep --invert-match --fixed-strings "$selected" "$history_file" 2> /dev/null)
-    local tmp_history=$(printf "%s\n%s" "$selected" "$old_history" | head --lines 100)
-    echo "$tmp_history" > "$history_file"
-
-    if [[ -n "$(chezmoi managed "$selected" 2> /dev/null)" ]]; then
-      echo "Opening managed file $selected with chezmoi edit"
-      chezmoi edit --watch "$selected"
-    else
-      echo "Opening $selected with $EDITOR"
-      $EDITOR "$selected"
-    fi
-  fi
-}
+# conf() {
+#   local history_file="$HOME/.config/conf_history"
+#   local query="$1"
+#
+#   touch "$history_file"
+#
+#   # 候補リストの作成
+#   local selected=$
+#     (
+#       cat "$history_file" 2> /dev/null
+#       chezmoi list --path-style absolute
+#       find "$HOME/.config" -maxdepth 4 -type f			\
+#         -not -path "*/.config/micro/*"				\
+#         -not -path "*/.config/vivaldi/*"			\
+#         -not -path "*/.config/google-chrome/*"                  \
+#         -not -path "*/.config/ibus/bus/*"                       \
+#         -not -path "*/.config/fcitx/dbus/*"                     \
+#         							\
+#         -not -path "*/.git/*"					\
+#         -not -path "*/Shared Dictionary/*"			\
+#         -not -path "*/Service Worker/*"				\
+#         -not -path "*/VideoDecodeStats/*"			\
+#         -not -path "*/Crashpad/*"				\
+#         -not -path "*/IndexedDB/*"				\
+#         -not -path "*/Dictionaries/*"				\
+#         -not -path "*/shared_proto_db/*"			\
+#         -not -path "*/*[Cc]ache*/*"				\
+#         -not -path "*/*Storage/*"				\
+#         -not -path "*/telemetry*"                               \
+#         							\
+#         -not -name "Network Persistent State"			\
+#         -not -name "TransportSecurity"				\
+#         -not -name "Preferences"				\
+#         -not -name "Trust Tokens*"				\
+#         -not -name "SharedStorage*"				\
+#         -not -name "Cookies*"					\
+#         -not -name "DIPS*"					\
+#         -not -name ".org.chromium.Chromium.*"                   \
+#         -not -name "electron-log-preload.js"			\
+#         -not -name "*cache*"					\
+#         							\
+#         -not -name "*.db"                                       \
+#         -not -name "*.boltdb"                                   \
+#         -not -name "*.lock"                                     \
+#         -not -name "*.log"					\
+#         -not -name "*.png"					\
+#         -not -name "*.jpg"
+#     )								\
+#     | sed '/^$/d'						\
+#     | awk '!a[$0]++'						\
+#     | fzf							\
+#         --query		"$query"				\
+#         --scheme	default					\
+#         --tiebreak	index					\
+#         --select-1						\
+#         --height	"40%"					\
+#         --layout	reverse					\
+#         --border						\
+#         --preview	"bat --color=always --style=numbers {}"
+#   )
+#
+#   # 履歴を保存してファイルを開く
+#   if [[ -n "$selected" ]]; then
+#     local old_history=$(grep --invert-match --fixed-strings "$selected" "$history_file" 2> /dev/null)
+#     local tmp_history=$(printf "%s\n%s" "$selected" "$old_history" | head --lines 100)
+#     echo "$tmp_history" > "$history_file"
+#
+#     if [[ -n "$(chezmoi managed "$selected" 2> /dev/null)" ]]; then
+#       echo "Opening managed file $selected with chezmoi edit"
+#       chezmoi edit --watch "$selected"
+#     else
+#       echo "Opening $selected with $EDITOR"
+#       $EDITOR "$selected"
+#     fi
+#   fi
+# }
 
 alias reload='exec zsh'
 
@@ -126,12 +134,12 @@ home-manager-list() {
 }
 
 # 起動時間の表示
-if [[ -n $START_TIME ]]; then
-  export END_TIME=$EPOCHREALTIME
-  export ZSH_STARTUP_TIME=$(printf "%.3f" $(( END_TIME - START_TIME )))
-
-  echo " 󰥔 Shell loaded in ${ZSH_STARTUP_TIME}s"
-
-  unset START_TIME END_TIME
-fi
+# if [[ -n $START_TIME ]]; then
+#   export END_TIME=$EPOCHREALTIME
+#   export ZSH_STARTUP_TIME=$(printf "%.3f" $(( END_TIME - START_TIME )))
+#
+#   echo " 󰥔 Shell loaded in ${ZSH_STARTUP_TIME}s"
+#
+#   unset START_TIME END_TIME
+# fi
 
