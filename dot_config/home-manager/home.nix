@@ -33,6 +33,7 @@
         pkgs.curl
         pkgs.git
         pkgs.fd                           # Snacks.nvim
+        pkgs.ripgrep                      # Snacks.nvim picker.grep()
         pkgs.wl-clipboard                 # clipboard provider
         pkgu.lua-language-server          # lua_ls
         pkgu.vscode-langservers-extracted # cssls eslint html jsonls
