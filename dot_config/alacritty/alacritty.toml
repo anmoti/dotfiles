@@ -1,0 +1,15 @@
+[general]
+import = [
+  "./catppuccin-mocha.toml"
+]
+
+[window]
+padding = { x = 5, y = 5 }
+
+opacity = 0.85
+blur = true
+
+[font]
+normal = { family = "HackGen Console NF", style = "Regular" }
+size = 11.25
+
