@@ -61,6 +61,7 @@ return {
     end,
   },
   {
+    --https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
     "neovim/nvim-lspconfig",
     dependencies = {
       "saghen/blink.cmp",
@@ -79,6 +80,7 @@ return {
             },
           },
         },
+        nixd = {},
       },
     },
     config = function(_, opts)
