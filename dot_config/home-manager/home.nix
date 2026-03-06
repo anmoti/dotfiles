@@ -6,12 +6,15 @@
   home.stateVersion = "25.11";
 
   home.packages = [
+
     # CLI Deps
     pkgs.oh-my-posh # zshrc
     pkgs.fd         # zshrc
     pkgs.fzf        # zshrc
     pkgs.bat        # zshrc
     pkgs.zoxide     # zshrc
+
+    pkgs.gh         # dot_gitconfig
 
     # GUI Deps
     pkgs.nwg-drawer # waybar
