@@ -88,6 +88,7 @@ return {
         cssls = {},  -- vscode-langservers-extracted
         jsonls = {}, -- vscode-langservers-extracted
         nixd = {},
+        terraformls = {},
       },
     },
     config = function(_, opts)

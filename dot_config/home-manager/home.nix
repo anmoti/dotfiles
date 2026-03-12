@@ -47,6 +47,7 @@
         packages.vscode-css-language-server # neovim_lsp[cssls]
         pkgu.vscode-langservers-extracted   # neovim_lsp[cssls, eslint, html, jsonls]
         pkgu.nixd                           # neovim_lsp[nixd]
+        pkgu.terraform                      # terraform-ls
         pkgu.terraform-ls                   # neovim_lsp[terraformls]
 
         pkgu.chezmoi                        # chezmoi.nvim
