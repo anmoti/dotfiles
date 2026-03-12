@@ -34,9 +34,6 @@ return {
       },
       terminal = {
         enabled = true,
-        env = {
-          PATH = vim.env.HOST_PATH or vim.env.PATH
-        }
       },
     },
     keys = {
@@ -153,17 +150,15 @@ return {
         desc = "Find Config file"
       },
       {
-        "<M-t>",
+        "<C-\\>",
         function()
-          local term, created = Snacks.terminal.get(nil, { create = false })
-          if not term then
-            term = Snacks.terminal.open()
-          else
-            term:toggle()
-          end
+          Snacks.terminal.toggle(nil, {
+            env = {
+              PATH = vim.env.HOST_PATH or vim.env.PATH,
+            },
+          })
         end,
-        mode = { "n", "t" },
-        desc = "Toggle terminal",
+        desc = "Toggle terminal"
       },
     },
   },
