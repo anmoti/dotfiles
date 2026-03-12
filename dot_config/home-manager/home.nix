@@ -1,4 +1,4 @@
-{ pkgs, pkgu, lib, ... }:
+{ pkgs, pkgu, packages, lib, ... }:
 
 {
   home.username = "anmoti";
@@ -13,6 +13,7 @@
     pkgs.fzf        # zshrc
     pkgs.bat        # zshrc
     pkgs.zoxide     # zshrc
+    pkgs.wl-clipboard    # satty
 
     pkgs.gh         # dot_gitconfig
 
@@ -21,6 +22,8 @@
 
     # CLI Apps
     pkgu.chezmoi
+    pkgu.terraform
+    pkgu._1password-cli
   ];
 
   programs.home-manager.enable = true;
@@ -32,18 +35,21 @@
       "--run" "export HOST_PATH=$PATH"
       "--set" "PATH" (lib.makeBinPath [
         pkgs.bash
-        pkgs.coreutils                    # sha256sum (blink.cmp)
+        pkgs.coreutils                      # sha256sum (blink.cmp)
         pkgs.curl
         pkgs.git
-        pkgs.fd                           # Snacks.nvim
-        pkgs.ripgrep                      # Snacks.nvim picker.grep()
-        pkgs.wl-clipboard                 # clipboard provider
+        pkgs.fd                             # Snacks.nvim
+        pkgs.ripgrep                        # Snacks.nvim picker.grep()
+        pkgs.wl-clipboard                   # clipboard provider
 
-        pkgu.lua-language-server          # lua_ls
-        pkgu.vscode-langservers-extracted # cssls eslint html jsonls
-        pkgu.nixd                         # lsp nixd
+        pkgu.lua-language-server            # neovim_lsp[lua_ls]
+        packages.gtk-css-language-server    # neovim_lsp[gtkcssls]
+        packages.vscode-css-language-server # neovim_lsp[cssls]
+        pkgu.vscode-langservers-extracted   # neovim_lsp[cssls, eslint, html, jsonls]
+        pkgu.nixd                           # neovim_lsp[nixd]
+        pkgu.terraform-ls                   # neovim_lsp[terraformls]
 
-        pkgu.chezmoi                      # chezmoi.nvim
+        pkgu.chezmoi                        # chezmoi.nvim
       ])
     ];
   };

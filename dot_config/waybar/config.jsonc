@@ -1,9 +1,9 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Magniquick/waybar-config-schema/main/schema.json",
   "layer": "bottom",
   "position": "top",
   "spacing": 10,
   "margin": "0 10px",
-
   // Left modules
   "modules-left": [
     "custom/launcher",
@@ -12,13 +12,11 @@
     "sway/window",
     "hyprland/window"
   ],
-
   "custom/launcher": {
-      "format":"<span size='x-large'></span>",
-      "on-click": "exec nwg-drawer",
-      "tooltip": false
+    "format": "<span size='x-large'></span>",
+    "on-click": "exec nwg-drawer",
+    "tooltip": false
   },
-
   "sway/workspaces": {
     "disable-scroll": true,
     "all-outputs": true,
@@ -44,16 +42,12 @@
       ]
     }
   },
-
   "sway/window": {},
   "hyprland/window": {},
-
-
   // Center Modules
   "modules-center": [
     "network"
   ],
-
   "network": {
     "format-disabled": " Disabled",
     "format": " {bandwidthDownBits:>}  {bandwidthUpBits:>}",
@@ -63,8 +57,6 @@
     "on-click": "alacritty --class waybar_nmtui -T 'NetworkManager TUI' -e nmtui",
     "interval": 2
   },
-
-
   // Right Modules
   "modules-right": [
     "custom/keyboard-layout",
@@ -78,7 +70,6 @@
     "tray",
     "custom/power"
   ],
-
   "custom/keyboard-layout": {
     "exec": "i=$(swaymsg -t get_inputs); echo \"\"; echo \"$i\" | grep -m1 'xkb_active_layout_name' | cut -d '\"' -f4",
     "format": "",
@@ -88,7 +79,6 @@
     "signal": 1,
     "on-click": "~/.config/waybar/scripts/keyhint.sh"
   },
-
   "idle_inhibitor": {
     "format": "{icon}",
     "format-icons": {
@@ -98,7 +88,6 @@
     "tooltip-format-activated": "Idle Inhibitor Activated",
     "tooltip-format-deactivated": "Idle Inhibitor Deactivated"
   },
-
   "cpu": {
     "interval": 5,
     "format": "{usage:>3}%",
@@ -108,29 +97,36 @@
     },
     "on-click": "footclient -T waybar_htop -e htop"
   },
-
   "memory": {
     "interval": 5,
     "format": "{:>3}%",
-    "on-click": "footclient -T waybar_htop -e htop", 
+    "on-click": "footclient -T waybar_htop -e htop",
     "states": {
       "warning": 70,
       "critical": 90
     }
   },
-
   "backlight": {
     "format": "{icon} {percent}%",
-    "format-icons": ["󰄰", "󰪞", "󰪟", "󰪠", "󰪡", "󰪢", "󰪣", "󰪤", "󰪥"],
+    "format-icons": [
+      "󰄰",
+      "󰪞",
+      "󰪟",
+      "󰪠",
+      "󰪡",
+      "󰪢",
+      "󰪣",
+      "󰪤",
+      "󰪥"
+    ],
     "tooltip-format": "Backlight (Scroll): {percent:}%",
     "on-scroll-down": "brightnessctl -c backlight set 5%-",
     "on-scroll-up": "brightnessctl -c backlight set +5%"
   },
-
   "pulseaudio": {
     "scroll-step": 2,
     "format": "{icon} {volume}%",
-    "format-muted":"󰝟 muted",
+    "format-muted": "󰝟 muted",
     "format-icons": {
       "headphones": "",
       "handsfree": "",
@@ -138,20 +134,28 @@
       "phone": "",
       "portable": "",
       "car": "",
-      "default": ["󰕿", "󰖀", "󰕾"]
+      "default": [
+        "󰕿",
+        "󰖀",
+        "󰕾"
+      ]
     },
     "on-click": "pavucontrol"
   },
-
   "battery": {
     "states": {
       "warning": 30,
       "critical": 15
     },
     "format": "{icon} {capacity}%",
-    "format-icons": ["", "", "", "", ""]
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
   },
-
   "clock": {
     "format": "{:%H:%M}",
     "format-alt": "{:%OI:%M %p}",
@@ -161,10 +165,10 @@
       "weeks-pos": "left",
       "on-scroll": 1,
       "format": {
-        "months":   "<span color='#ffead3'><b>{}</b></span>",
+        "months": "<span color='#ffead3'><b>{}</b></span>",
         "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
-        "days":     "<span color='#ecc6d9'><b>{}</b></span>",
-        "today":    "<span color='#ff6699'><b><u>{}</u></b></span>"
+        "days": "<span color='#ecc6d9'><b>{}</b></span>",
+        "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
       }
     },
     "actions": {
@@ -172,14 +176,12 @@
       "on-scroll-down": "shift_down"
     }
   },
-
   "tray": {
     "icon-size": 16,
     "spacing": 10
   },
-
   "custom/power": {
-    "format":"⏻",
+    "format": "⏻",
     "on-click": "exec ~/.config/sway/scripts/power_menu.sh",
     "tooltip": false
   }

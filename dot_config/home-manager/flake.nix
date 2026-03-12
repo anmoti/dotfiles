@@ -12,12 +12,31 @@
   outputs = { nixpkgs, nixpkgs-unstable, home-manager, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      pkgu = nixpkgs-unstable.legacyPackages.${system};
+
+      config = {
+        allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+          "terraform"
+          "1password-cli"
+        ];
+      };
+
+      pkgs = import nixpkgs {
+        inherit system config;
+      };
+      pkgu = import nixpkgs-unstable {
+        inherit system config;
+      };
+
+      localPackages = {
+        vscode-css-language-server = pkgs.callPackage ./pkgs/vscode-css-language-server/package.nix {};
+        gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
+      };
     in {
+      packages.${system} = localPackages;
+
       homeConfigurations."anmoti" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit pkgu; };
+        extraSpecialArgs = { inherit pkgu; packages = localPackages; };
         modules = [ ./home.nix ];
       };
     };

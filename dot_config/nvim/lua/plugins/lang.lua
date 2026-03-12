@@ -80,6 +80,13 @@ return {
             },
           },
         },
+        html = {}, -- vscode-langservers-extracted
+        gtkcssls = {
+          cmd = { "gtk-css-language-server" },
+          filetypes = { "css.gtk" }
+        },
+        cssls = {},  -- vscode-langservers-extracted
+        jsonls = {}, -- vscode-langservers-extracted
         nixd = {},
       },
     },
