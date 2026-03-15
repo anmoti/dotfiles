@@ -1,6 +1,6 @@
 [user]
 	name = anmoti
-	email = 77442643+anmoti@noreply.github.com
+	email = 77442643+anmoti@users.noreply.github.com
 [credential "https://github.com"]
 	helper = 
 	helper = !/home/anmoti/.nix-profile/bin/gh auth git-credential
