@@ -12,6 +12,7 @@ ZSH_CUSTOM="/usr/share/zsh"
 
 # Setup zsh-completions
 fpath+="${ZSH_CUSTOM}/site-functions"
+fpath+="$HOME/.nix-profile/share/zsh/site-functions"
 
 # Setup oh-my-zsh
 plugins=(git)
