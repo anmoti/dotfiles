@@ -23,7 +23,7 @@
     # CLI Apps
     pkgu.chezmoi
     pkgu.terraform
-    pkgu._1password-cli
+    pkgs.doppler
   ];
 
   programs.home-manager.enable = true;

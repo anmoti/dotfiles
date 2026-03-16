@@ -16,7 +16,6 @@
       config = {
         allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
           "terraform"
-          "1password-cli"
         ];
       };
 
