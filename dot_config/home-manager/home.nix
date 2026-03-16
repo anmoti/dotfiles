@@ -8,22 +8,22 @@
   home.packages = [
 
     # CLI Deps
-    pkgs.oh-my-posh # zshrc
-    pkgs.fd         # zshrc
-    pkgs.fzf        # zshrc
-    pkgs.bat        # zshrc
-    pkgs.zoxide     # zshrc
-    pkgs.wl-clipboard    # satty
-
-    pkgs.gh         # dot_gitconfig
+    pkgs.oh-my-posh   # zshrc
+    pkgs.fd           # zshrc
+    pkgs.fzf          # zshrc
+    pkgs.bat          # zshrc
+    pkgs.zoxide       # zshrc
+    pkgs.wl-clipboard # satty
+    pkgs.doppler      # chezmoi
+    pkgs.gh           # dot_gitconfig
 
     # GUI Deps
-    pkgs.nwg-drawer # waybar
+    pkgs.nwg-drawer   # waybar
 
     # CLI Apps
     pkgu.chezmoi
     pkgu.terraform
-    pkgs.doppler
+    pkgu.wakatime-cli
   ];
 
   programs.home-manager.enable = true;
@@ -51,6 +51,7 @@
         pkgu.terraform-ls                   # neovim_lsp[terraformls]
 
         pkgu.chezmoi                        # chezmoi.nvim
+        pkgu.wakatime-cli                   # vim-wakatime
       ])
     ];
   };
