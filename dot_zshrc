@@ -40,14 +40,28 @@ source ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 alias reload='exec zsh'
 
-home-manager-list() {
-  nix path-info -r --json --json-format 2 $(readlink -f ~/.local/state/nix/profiles/home-manager) | \
-  jq -r '
-    .info | to_entries | map(.value + {path: .key}) | .[] |
-    . + (.path | sub("^[a-z0-9]{32}-"; "") | capture("^(?<name>.*)-(?=[0-9])(?<ver>.*)$")) |
-    "\(.name)|\(.ver)|\(.narSize)"
-  ' | \
-  awk -F '|' '{printf "%-45s %-20s %10.2f MB\n", $1, $2, $3/1024/1024}' | \
-  sort
+hm() {
+  case "$1" in
+    list)
+      nix path-info -r --json --json-format 2 $(readlink -f ~/.local/state/nix/profiles/home-manager) | \
+      jq -r '
+        .info | to_entries | map(.value + {path: .key}) | .[] |
+        . + (.path | sub("^[a-z0-9]{32}-"; "") | capture("^(?<name>.*)-(?=[0-9])(?<ver>.*)$")) |
+        "\(.name)|\(.ver)|\(.narSize)"
+      ' | \
+      awk -F '|' '{printf "%-45s %-20s %10.2f MB\n", $1, $2, $3/1024/1024}' | \
+      sort
+      ;;
+
+    update)
+      nix flake update --flake ~/.config/home-manager
+      echo -n "Do you want 'chezmoi re-add flake.lock'? [Y/n]"
+      read -r res
+
+      if [[ -z "$res" || "$res" =~ ^[yY]$ ]]; then
+        chezmoi re-add ~/.config/home-manager/flake.lock
+      fi
+      ;;
+  esac
 }
 
