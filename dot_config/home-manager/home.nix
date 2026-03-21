@@ -35,7 +35,7 @@
       "--run" "export HOST_PATH=$PATH"
       "--set" "PATH" (lib.makeBinPath [
         pkgs.bash
-        pkgs.coreutils                      # sha256sum (blink.cmp)
+        pkgs.coreutils                      # sha256sum (blink.cmp), tee (:SudoWrite)
         pkgs.curl
         pkgs.git
         pkgs.fd                             # Snacks.nvim
