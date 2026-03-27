@@ -54,7 +54,7 @@
     "tooltip-format-wifi": "ESS ID: {essid}",
     "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
     "format-disconnected": " Disconnected",
-    "on-click": "~/.scripts/term.sh -t 'NetworkManager TUI' -f -e nmtui",
+    "on-click": "term -t 'NetworkManager TUI' -f -e nmtui",
     "interval": 2
   },
   // Right Modules
@@ -95,12 +95,12 @@
       "warning": 70,
       "critical": 90
     },
-    "on-click": "~/.scripts/term.sh -t 'htop' -f -e htop"
+    "on-click": "~/.local/bin/term -t 'htop' -f -e htop"
   },
   "memory": {
     "interval": 5,
     "format": "{:>3}%",
-    "on-click": "~/.scripts/term.sh -t 'htop' -f -e htop",
+    "on-click": "~/.local/bin/term -t 'htop' -f -e htop",
     "states": {
       "warning": 70,
       "critical": 90
