@@ -1,0 +1,2 @@
+# Razer BlackWidow Elite の音量ダイヤルの設定が終わってるので無視
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0228", ATTRS{device_serial}=="IO1902F27101166", ENV{ID_INPUT_MOUSE}=="1", ENV{LIBINPUT_IGNORE_DEVICE}="1"
