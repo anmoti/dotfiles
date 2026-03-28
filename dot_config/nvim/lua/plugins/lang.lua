@@ -17,7 +17,7 @@ return {
     ---@type blink.cmp.Config
     opts = {
       keymap = {
-        preset = "enter",
+        preset = "super-tab",
       },
       sources = {
         default = { "lazydev", "lsp", "path", "snippets", "buffer" },
@@ -68,6 +68,9 @@ return {
     },
     opts = {
       servers = {
+        bashls = {
+          filetypes = { "bash", "sh", "zsh" },
+        },
         lua_ls = {
           settings = {
             Lua = {

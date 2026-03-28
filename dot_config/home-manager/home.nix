@@ -44,6 +44,7 @@
         pkgs.ripgrep                        # Snacks.nvim picker.grep()
         pkgs.wl-clipboard                   # clipboard provider
 
+        pkgu.bash-language-server           # neovim_lsp[bashls]
         pkgu.lua-language-server            # neovim_lsp[lua_ls]
         packages.gtk-css-language-server    # neovim_lsp[gtkcssls]
         packages.vscode-css-language-server # neovim_lsp[cssls]
