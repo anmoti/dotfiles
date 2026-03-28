@@ -1,0 +1,192 @@
+#!/bin/bash
+
+STATE_FILE="/tmp/bright_state.json"
+STATE_LOCK="/tmp/bright_state.lock"
+LOCK_FILE="/tmp/bright.lock"
+
+if [ ! -s "$STATE_FILE" ] || ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
+  echo "{}" > "$STATE_FILE"
+fi
+# example: {
+#   "HDMI-A-1_MODEL_SERIAL": {
+#     "input": "+0",
+#     "cached_value": 100,
+#     "cached_max_value": 100
+#   }
+# }
+
+update_state() {
+  local tmp
+  exec 8> "$STATE_LOCK"
+  flock 8
+
+  # 引数として渡されたjqの処理を実行
+  tmp=$(jq "$@" "$STATE_FILE")
+  echo "$tmp" > "$STATE_FILE"
+
+  flock -u 8
+  exec 8>&-
+}
+
+get_target_monitor_name() {
+  echo "$MONITOR_INFOS" | jq -r '.[] | select(.focused == true) | .name'
+}
+
+resolve_monitor_info() {
+  local target_name="$1"
+  MONITOR_INFO=$(echo "$MONITOR_INFOS" | jq -r --arg n "$target_name" '.[] | select(.name == $n)')
+
+  if [ -z "$MONITOR_INFO" ]; then
+    echo "Error: monitor not found (target='$target_name')" >&2
+    exit 1
+  fi
+
+  MONITOR_NAME=$(echo "$MONITOR_INFO" | jq -r '.name')
+  MONITOR_MODEL=$(echo "$MONITOR_INFO" | jq -r '.model')
+  MONITOR_SERIAL=$(echo "$MONITOR_INFO" | jq -r '.serial')
+  MONITOR_ID="${MONITOR_NAME}_${MONITOR_MODEL}_${MONITOR_SERIAL}"
+}
+
+get_ddc_value() {
+  local cached
+  cached=$(jq -r --arg id "$MONITOR_ID" '.[$id] | select(.cached_max_value != null) | "\(.cached_value) \(.cached_max_value)"' "$STATE_FILE" 2>/dev/null)
+
+  if [ -n "$cached" ]; then
+    read -r VALUE MAX_VALUE <<< "$cached"
+    return 0
+  fi
+
+  # キャッシュがない場合は ddcutil で取得
+  local res
+  res=$(ddcutil getvcp 10 --terse --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL")
+  read -r _ _ _ VALUE MAX_VALUE <<< "$res"
+  update_ddc_cache "$VALUE" "$MAX_VALUE"
+}
+
+update_ddc_cache() {
+  local v="$1" mv="$2"
+
+  # shellcheck disable=SC2016
+  update_state \
+    --arg id "$MONITOR_ID" \
+    --argjson v  "$v" \
+    --argjson mv "$mv" \
+    '.[$id] //= {} | .[$id].cached_value = $v | .[$id].cached_max_value = $mv'
+}
+
+remove_ddc_cache() {
+  # shellcheck disable=SC2016
+  update_state \
+    --arg id "$MONITOR_ID" \
+    '.[$id] |= del(.cached_value, .cached_max_value)'
+}
+
+# モニターの情報を取得
+MONITOR_INFOS="$(hyprctl monitors -j)"
+
+case "$1" in
+  get)
+    MONITOR_NAME="${2:-$(get_target_monitor_name)}"
+
+    if [ "$MONITOR_NAME" == "eDP-1" ]; then
+      VALUE="$(brightnessctl get)"
+      MAX_VALUE="$(brightnessctl max)"
+    else
+      resolve_monitor_info "$MONITOR_NAME"
+      get_ddc_value
+    fi
+
+    PERCENTAGE=$(( VALUE * 100 / MAX_VALUE ))
+
+    jq -n --argjson p "$PERCENTAGE" '{"percentage": $p}' | jq --unbuffered --compact-output
+    ;;
+  set)
+    INPUT="${2:-"+0"}"
+
+    # 符号と数値を分離
+    if [[ "$INPUT" =~ ^([+-]?)([0-9]+)$ ]]; then
+      SIGN="${BASH_REMATCH[1]}"
+      NUM=${BASH_REMATCH[2]}
+    else
+      echo "Error: invalid input '$INPUT'" >&2
+      exit 1
+    fi
+
+    MONITOR_NAME="$(get_target_monitor_name)"
+
+    if [ "$MONITOR_NAME" == "eDP-1" ]; then
+      brightnessctl set "${NUM}%${SIGN}"
+    else
+      resolve_monitor_info "$MONITOR_NAME"
+
+      CURRENT_INPUT=$(jq -r --arg id "$MONITOR_ID" '.[$id].input // ""' "$STATE_FILE")
+      if [[ "$CURRENT_INPUT" =~ ^([+-]?)([0-9]+)$ ]]; then
+        CURR_SIGN="${BASH_REMATCH[1]}"
+        CURR_NUM=${BASH_REMATCH[2]}
+
+        if [ "$SIGN" == "" ]; then
+          :
+        elif [ "$CURR_SIGN" == "" ]; then
+          if [ "$SIGN" == "+" ]; then
+            NUM=$(( CURR_NUM + NUM ))
+          else
+            NUM=$(( CURR_NUM - NUM ))
+          fi
+          SIGN=""
+        elif [ "$CURR_SIGN" == "$SIGN" ]; then
+          NUM=$(( CURR_NUM + NUM ))
+        elif (( CURR_NUM > NUM )); then
+          NUM=$(( CURR_NUM - NUM ))
+          SIGN="$CURR_SIGN"
+        else
+          NUM=$(( NUM - CURR_NUM ))
+        fi
+      fi
+
+      # shellcheck disable=SC2016
+      update_state \
+        --arg id "$MONITOR_ID" \
+        --arg val "$SIGN$NUM" \
+        '.[$id] //= {} | .[$id].input = $val'
+
+      # ロックを取得できない場合は、先行プロセスが処理してくれるので終了
+      exec 9> "$LOCK_FILE"
+      if ! flock -n 9; then
+        exit 0
+      fi
+
+      while true; do
+        # 現在のキューを読み取り、JSONのinputをリセットする
+        PROC_INPUT=$(jq -r --arg id "$MONITOR_ID" '.[$id].input // ""' "$STATE_FILE")
+
+        # shellcheck disable=SC2016
+        update_state \
+          --arg id "$MONITOR_ID" \
+          '.[$id].input = ""'
+
+        # 未処理の入力がなければループを抜けて終了
+        if [ -z "$PROC_INPUT" ] || [ "$PROC_INPUT" == "+0" ] || [ "$PROC_INPUT" == "-0" ]; then
+          break
+        fi
+
+        # 読み取った値で ddcutil を実行
+        if [[ "$PROC_INPUT" =~ ^([+-]?)([0-9]+)$ ]]; then
+          P_SIGN="${BASH_REMATCH[1]}"
+          P_NUM=${BASH_REMATCH[2]}
+
+          if [[ "$P_SIGN" == "" ]]; then
+            ddcutil setvcp 10 "$P_NUM" --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL"
+          else
+            ddcutil setvcp 10 "$P_SIGN" "$P_NUM" --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL"
+          fi
+
+          remove_ddc_cache
+        fi
+      done
+
+      flock -u 9
+      exec 9>&-
+    fi
+    ;;
+esac
+

@@ -8,17 +8,19 @@
   home.packages = [
 
     # CLI Deps
-    pkgs.oh-my-posh   # zshrc
-    pkgs.fd           # zshrc
-    pkgs.fzf          # zshrc
-    pkgs.bat          # zshrc
-    pkgs.zoxide       # zshrc
-    pkgs.wl-clipboard # satty
-    pkgs.doppler      # chezmoi
-    pkgs.gh           # dot_gitconfig
+    pkgs.oh-my-posh     # zshrc
+    pkgs.fd             # zshrc
+    pkgs.fzf            # zshrc
+    pkgs.bat            # zshrc
+    pkgs.zoxide         # zshrc
+    pkgs.wl-clipboard   # satty
+    pkgs.doppler        # chezmoi
+    pkgs.gh             # dot_gitconfig
+    pkgs.brightnessctl  # change-brightness
+    pkgs.ddcutil        # change-brightness
 
     # GUI Deps
-    pkgs.nwg-drawer   # waybar
+    pkgs.nwg-drawer     # waybar
 
     # CLI Apps
     pkgu.chezmoi
@@ -62,3 +64,4 @@
     options = "--delete-older-than 7d";
   };
 }
+

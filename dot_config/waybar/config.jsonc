@@ -63,7 +63,7 @@
     "idle_inhibitor",
     "cpu",
     "memory",
-    "backlight",
+    "custom/brightness",
     "pulseaudio",
     "battery",
     "clock",
@@ -106,8 +106,11 @@
       "critical": 90
     }
   },
-  "backlight": {
-    "format": "{icon} {percent}%",
+  "custom/brightness": {
+    "exec": "~/.local/bin/change-brightness get $WAYBAR_OUTPUT_NAME",
+    "return-type": "json",
+    "restart-interval": 0,
+    "format": "{icon} {percentage}%",
     "format-icons": [
       "󰄰",
       "󰪞",
@@ -119,9 +122,9 @@
       "󰪤",
       "󰪥"
     ],
-    "tooltip-format": "Backlight (Scroll): {percent:}%",
-    "on-scroll-down": "brightnessctl -c backlight set 5%-",
-    "on-scroll-up": "brightnessctl -c backlight set +5%"
+    "tooltip-format": "Backlight (Scroll): {percentage}%",
+    "on-scroll-down": "~/.local/bin/change-brightness set -5",
+    "on-scroll-up": "~/.local/bin/change-brightness set +5"
   },
   "pulseaudio": {
     "scroll-step": 2,
