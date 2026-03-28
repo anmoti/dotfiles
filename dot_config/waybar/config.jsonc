@@ -14,7 +14,7 @@
   ],
   "custom/launcher": {
     "format": "<span size='x-large'></span>",
-    "on-click": "exec nwg-drawer",
+    "on-click": "exec nwg-drawer -fm 'nemo' -term '$HOME/.local/bin/term -e' -closebtn right -wm hyprland -s 'drawer.gtk.css'",
     "tooltip": false
   },
   "sway/workspaces": {
