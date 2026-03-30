@@ -18,6 +18,7 @@
     pkgs.gh             # dot_gitconfig
     pkgs.brightnessctl  # change-brightness
     pkgs.ddcutil        # change-brightness
+    pkgs.playerctl      # hyprlock(songdetail)
 
     # GUI Deps
     pkgs.nwg-drawer     # waybar
@@ -26,9 +27,22 @@
     pkgu.chezmoi
     pkgu.terraform
     pkgu.wakatime-cli
+
+    # Font Deps
+    pkgs.google-fonts
+    pkgs.noto-fonts-cjk-sans
+    pkgs.noto-fonts-cjk-serif
+    pkgs.meslo-lg
+    pkgs.monaspace
+    pkgs.mona-sans
+    pkgs.hackgen-font
+    pkgs.hackgen-nf-font
+    pkgs.nerd-fonts.symbols-only
+
   ] ++ packages.wallpapers;
 
   programs.home-manager.enable = true;
+  fonts.fontconfig.enable = true;
 
   programs.neovim = {
     enable = true;
