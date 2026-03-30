@@ -44,3 +44,21 @@ sudo ln -sf ~/.config/udev/99-razer-ignore.rules /etc/udev/rules.d/99-razer-igno
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
+
+## systemd
+
+hyprlockなど
+
+`/etc/systemd/logind.conf`
+```
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+```
+
+# Resources
+
+https://github.com/end-4/dots-hyprland
+https://github.com/JaKooLit/Hyprland-Dots
+https://github.com/fufexan/dotfiles
+https://github.com/MrVivekRajan/Hyprlock-Styles/
