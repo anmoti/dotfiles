@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# home.nix   hash: {{ include "dot_config/home-manager/home.nix"   | sha256sum }}
-# flake.lock hash: {{ include "dot_config/home-manager/flake.lock" | sha256sum }}
+# home-manager directory hash: {{ output "sh" "-c" (printf "find %s/dot_config/home-manager -type f -print0 | xargs -0 sha256sum | sort | sha256sum" .chezmoi.sourceDir) }}
+
 nix run nixpkgs#home-manager -- switch --flake ~/.config/home-manager
 
