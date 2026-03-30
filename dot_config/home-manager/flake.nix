@@ -26,9 +26,23 @@
         inherit system config;
       };
 
+      wallpaperPkgs =
+        let
+          wallpaperDir = ./pkgs/wallpapers;
+          files = builtins.readDir wallpaperDir;
+        in
+        pkgs.lib.pipe files [
+          (pkgs.lib.filterAttrs (name: type:
+            type == "regular" && pkgs.lib.hasSuffix ".nix" name
+          ))
+          builtins.attrNames
+          (map (name: pkgs.callPackage (wallpaperDir + "/${name}") {}))
+        ];
+
       localPackages = {
         vscode-css-language-server = pkgs.callPackage ./pkgs/vscode-css-language-server/package.nix {};
         gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
+        wallpapers = wallpaperPkgs;
       };
     in {
       packages.${system} = localPackages;

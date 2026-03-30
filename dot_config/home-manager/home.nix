@@ -26,7 +26,7 @@
     pkgu.chezmoi
     pkgu.terraform
     pkgu.wakatime-cli
-  ];
+  ] ++ packages.wallpapers;
 
   programs.home-manager.enable = true;
 
