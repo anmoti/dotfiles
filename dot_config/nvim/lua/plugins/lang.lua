@@ -90,7 +90,24 @@ return {
         },
         cssls = {},  -- vscode-langservers-extracted
         jsonls = {}, -- vscode-langservers-extracted
-        nixd = {},
+        nixd = {
+          settings = {
+            nixd = {
+              nixpkgs = {
+                expr = "import <nixpkgs> { }",
+              },
+              formatting = {
+                command = { "nixfmt" },
+              },
+              options = {
+                home_manager = {
+                  expr = '(builtins.getFlake (toString ./.)).homeConfigurations.' .. os.getenv("USER") .. '.options',
+                },
+              },
+            },
+          },
+
+        },
         terraformls = {},
       },
     },
