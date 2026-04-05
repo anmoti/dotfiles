@@ -9,6 +9,7 @@ stdenv.mkDerivation rec {
   pname = "${id}-spyfamily-anya-spread-eagle";
 
   src = fetchurl {
+    # Source:
     # https://x.com/_tatsuyaendo_/status/1512801651459239937 
     url = "https://pbs.twimg.com/media/FP6NDzNacAYeLhr.jpg?name=orig";
     hash = "sha256-DgUyC7ecmNC2aETZjnio6Z6D4QNB/CERwY3OdzTKeJo=";
