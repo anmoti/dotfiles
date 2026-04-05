@@ -23,8 +23,7 @@ stdenv.mkDerivation {
   dontUnpack = true;
 
   installPhase = ''
-    mkdir -p $out/share/wallpapers
-    cp $src $out/share/wallpapers/${id}.${ext}
+    install -Dm0644 $src $out/share/wallpapers/${id}.${ext}
   '';
 
   passthru = {

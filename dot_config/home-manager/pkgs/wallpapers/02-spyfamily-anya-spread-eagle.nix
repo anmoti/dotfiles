@@ -27,8 +27,6 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [ imagemagick ];
 
   installPhase = ''
-    mkdir -p $out/share/wallpapers
-
     SOURCE_WIDTH=$(magick ${src} -format "%w" info:)
 
     LOGO_WIDTH=$(awk "BEGIN {print $SOURCE_WIDTH * 0.5}")
@@ -64,7 +62,9 @@ stdenv.mkDerivation rec {
       -gravity center \
       -background "$BG_COLOR" \
       -extent 3840x2160 \
-      $out/share/wallpapers/${id}.${ext}
+      final.${ext}
+      
+      install -Dm0644 final.${ext} $out/share/wallpapers/${id}.${ext}
   '';
 
   passthru = {
