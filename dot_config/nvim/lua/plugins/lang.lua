@@ -6,6 +6,9 @@ return {
     opts = {
       formatters_by_ft = {
         lua = { "stylua" },
+        python = {
+          "ruff_fix", "ruff_format", "ruff_organize_imports",
+        },
       },
       format_on_save = { timeout_ms = 500, lsp_fallback = true },
     },
@@ -13,6 +16,7 @@ return {
   {
     "saghen/blink.cmp",
     version = "*",
+    dependencies = { "fang2hou/blink-copilot" },
     ---@module "blink.cmp"
     ---@type blink.cmp.Config
     opts = {
@@ -20,12 +24,27 @@ return {
         preset = "super-tab",
       },
       sources = {
-        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+        default = { "lazydev", "lsp", "copilot", "path", "snippets", "buffer" },
         providers = {
           lazydev = {
             name = "lazyDev",
             module = "lazydev.integrations.blink",
             score_offset = 100,
+          },
+          copilot = {
+            name = "copilot",
+            module = "blink-copilot",
+            score_offset = 100,
+            async = true,
+          },
+        },
+      },
+      completion = {
+        documentation = {
+          auto_show = true,
+          auto_show_delay_ms = 200,
+          window = {
+            border = "rounded",
           },
         },
       },
@@ -43,6 +62,27 @@ return {
         { path = "luvit-meta/library", words = { "vim%.uv" } },
       },
     },
+  },
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = "markdown",
+    opts = {
+      code = {
+        sign = false,
+        width = "block",
+      },
+    },
+    config = function(_, opts)
+      require("render-markdown").setup(opts)
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("render-markdown-setup", {}),
+        pattern = "markdown",
+        callback = function()
+          pcall(require("render-markdown").enable)
+        end
+      })
+    end,
   },
   {
     "nvim-treesitter/nvim-treesitter",
@@ -90,6 +130,26 @@ return {
         },
         cssls = {},  -- vscode-langservers-extracted
         jsonls = {}, -- vscode-langservers-extracted
+        basedpyright = {
+          settings = {
+            basedpyright = {
+              analysis = {
+                typeCheckingMode = "off",
+              },
+            },
+          },
+        },
+        ruff = {
+          config = function(opt)
+            opt.enable()
+
+            -- https://docs.astral.sh/ruff/editors/setup/?utm_source=chatgpt.com#neovim
+            opt.on_attach(function(client)
+              -- LSP: Disable hover capability from Ruff
+              client.server_capabilities.hoverProvider = false
+            end)
+          end,
+        },
         nixd = {
           settings = {
             nixd = {
@@ -113,10 +173,57 @@ return {
     },
     config = function(_, opts)
       for server, server_opts in pairs(opts.servers) do
+        local user_config = server_opts.config
+        server_opts.config = nil
+
         server_opts.capabilities = require("blink.cmp").get_lsp_capabilities(server_opts.capabilities)
-        vim.lsp.config(server, server_opts)
-        vim.lsp.enable(server)
+
+        local opt = {
+          enable = function()
+            vim.lsp.config(server, server_opts)
+            vim.lsp.enable(server)
+          end,
+          on_attach = function(fn)
+            vim.api.nvim_create_autocmd("LspAttach", {
+              callback = function(args)
+                local client = vim.lsp.get_client_by_id(args.data.client_id)
+                if client and client.name == server then
+                  fn(client, args)
+                end
+              end,
+            })
+          end,
+          server = server,
+          opts = server_opts,
+        }
+
+        if user_config then
+          user_config(opt)
+        else
+          opt.enable()
+        end
       end
+    end,
+  },
+  {
+    "mfussenegger/nvim-lint",
+    config = function()
+      -- https://github.com/MartinLwx/dotfiles/blob/864e4b6/nvim/lua/plugins/nvim-lint.lua
+      local lint = require("lint")
+
+      -- NOTE: Install linters with Mason
+      lint.linters_by_ft = {
+        python = { "mypy" },
+      }
+
+      -- When to trigger lint? I bind it to some events as follows:
+      --   BufEnter: enter a buffer.
+      --   BufWritePost: save a buffer.
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
+        callback = function()
+          lint.try_lint()
+        end,
+      })
     end,
   },
 }

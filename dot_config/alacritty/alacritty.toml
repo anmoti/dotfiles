@@ -7,9 +7,13 @@ import = [
 padding = { x = 5, y = 5 }
 
 opacity = 0.85
-blur = true
 
 [font]
 normal = { family = "HackGen Console NF", style = "Regular" }
 size = 11.25
 
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"

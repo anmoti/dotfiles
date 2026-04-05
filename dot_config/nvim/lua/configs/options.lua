@@ -15,3 +15,15 @@ vim.opt.fixendofline = true
 vim.opt.list = true
 vim.opt.listchars = { tab = ">.", trail = "_" }
 
+vim.g.python_indent = {
+  closed_paren_align_last_line = false,
+  open_paren = "shiftwidth()",
+}
+
+vim.diagnostic.config({
+  float = {
+    source = "always",
+    border = "rounded",
+  },
+  severity_sort = true
+})
