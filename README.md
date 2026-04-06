@@ -62,3 +62,5 @@ https://github.com/end-4/dots-hyprland
 https://github.com/JaKooLit/Hyprland-Dots
 https://github.com/fufexan/dotfiles
 https://github.com/MrVivekRajan/Hyprlock-Styles/
+https://github.com/D00cky/NaruMa/
+https://github.com/alpha2phi/modern-neovim

@@ -37,7 +37,6 @@ return {
       },
     },
     keys = {
-
       {
         "<leader>ff",
         function()
@@ -152,9 +151,12 @@ return {
       {
         "<C-\\>",
         function()
+          local host_path = vim.env.HOST_PATH
+          local nvim_path = vim.env.PATH
+
           Snacks.terminal.toggle(nil, {
             env = {
-              PATH = vim.env.HOST_PATH or vim.env.PATH,
+              PATH = nvim_path .. (host_path and (":" .. host_path) or ""),
             },
           })
         end,

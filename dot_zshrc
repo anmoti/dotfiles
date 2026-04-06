@@ -23,10 +23,6 @@ source "$ZSH/oh-my-zsh.sh"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/zsh_init"
 [[ ! -d "$cache_dir" ]] && mkdir -p "$cache_dir"
 
-
-# Setup oh-my-posh
-eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
-
 # Setup zoxide
 eval "$(zoxide init zsh)"
 
@@ -64,4 +60,7 @@ hm() {
       ;;
   esac
 }
+
+# Setup oh-my-posh
+eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/default.omp.json)"
 
