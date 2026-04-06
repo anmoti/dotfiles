@@ -185,6 +185,7 @@ return {
           end,
           on_attach = function(fn)
             vim.api.nvim_create_autocmd("LspAttach", {
+              group = vim.api.nvim_create_augroup("lsp-" .. server .. "-attach", { clear = true }),
               callback = function(args)
                 local client = vim.lsp.get_client_by_id(args.data.client_id)
                 if client and client.name == server then
@@ -215,7 +216,8 @@ return {
         python = { "mypy" },
       }
 
-      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
+      vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
+        group = vim.api.nvim_create_augroup("nvim-lint-setup", { clear = true }),
         callback = function()
           lint.try_lint()
         end,
