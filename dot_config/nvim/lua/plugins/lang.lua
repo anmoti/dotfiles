@@ -141,7 +141,7 @@ return {
         },
         ruff = {
           config = function(opt)
-            -- https://docs.astral.sh/ruff/ditors/setup/#neovim
+            -- https://docs.astral.sh/ruff/editors/setup/#neovim
             opt.on_attach(function(client)
               -- LSP: Disable hover capability from Ruff
               client.server_capabilities.hoverProvider = false
