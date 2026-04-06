@@ -141,13 +141,13 @@ return {
         },
         ruff = {
           config = function(opt)
-            opt.enable()
-
-            -- https://docs.astral.sh/ruff/editors/setup/?utm_source=chatgpt.com#neovim
+            -- https://docs.astral.sh/ruff/ditors/setup/#neovim
             opt.on_attach(function(client)
               -- LSP: Disable hover capability from Ruff
               client.server_capabilities.hoverProvider = false
             end)
+
+            opt.enable()
           end,
         },
         nixd = {
