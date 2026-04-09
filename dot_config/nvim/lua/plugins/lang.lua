@@ -109,6 +109,7 @@ return {
         },
         cssls = {},  -- vscode-langservers-extracted
         jsonls = {}, -- vscode-langservers-extracted
+        yamlls = {}, -- yaml-language-server
         basedpyright = {
           settings = {
             basedpyright = {

@@ -60,6 +60,7 @@
 
         pkgu.bash-language-server           # neovim_lsp[bashls]
         pkgu.lua-language-server            # neovim_lsp[lua_ls]
+        pkgu.yaml-language-server           # neovim_lsp[yamlls]
         packages.gtk-css-language-server    # neovim_lsp[gtkcssls]
         packages.vscode-css-language-server # neovim_lsp[cssls]
         pkgu.vscode-langservers-extracted   # neovim_lsp[cssls, eslint, html, jsonls]
