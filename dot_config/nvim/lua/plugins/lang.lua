@@ -87,6 +87,8 @@ return {
       "b0o/schemastore.nvim",
     },
     opts = function()
+      local hm_user = vim.env.USER or os.getenv("USER")
+
       return {
         servers = {
           bashls = {
@@ -160,7 +162,7 @@ return {
                 },
                 options = {
                   home_manager = {
-                    expr = '(builtins.getFlake (toString ./.)).homeConfigurations.' .. os.getenv("USER") .. '.options',
+                    expr = '(builtins.getFlake (toString ./.)).homeConfigurations.' .. hm_user .. '.options',
                   },
                 },
               },
