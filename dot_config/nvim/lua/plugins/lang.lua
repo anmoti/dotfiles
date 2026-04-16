@@ -84,73 +84,92 @@ return {
     "neovim/nvim-lspconfig",
     dependencies = {
       "saghen/blink.cmp",
+      "b0o/schemastore.nvim",
     },
-    opts = {
-      servers = {
-        bashls = {
-          filetypes = { "bash", "sh", "zsh" },
-        },
-        lua_ls = {
-          settings = {
-            Lua = {
-              workspace = {
-                library = vim.api.nvim_get_runtime_file("", true),
-              },
-              completion = {
-                callSnippet = "Replace",
-              },
-            },
+    opts = function()
+      return {
+        servers = {
+          bashls = {
+            filetypes = { "bash", "sh", "zsh" },
           },
-        },
-        html = {}, -- vscode-langservers-extracted
-        gtkcssls = {
-          cmd = { "gtk-css-language-server" },
-          filetypes = { "css.gtk" }
-        },
-        cssls = {},  -- vscode-langservers-extracted
-        jsonls = {}, -- vscode-langservers-extracted
-        yamlls = {}, -- yaml-language-server
-        basedpyright = {
-          settings = {
-            basedpyright = {
-              analysis = {
-                typeCheckingMode = "off",
-              },
-            },
-          },
-        },
-        ruff = {
-          config = function(opt)
-            -- https://docs.astral.sh/ruff/editors/setup/#neovim
-            opt.on_attach(function(client)
-              -- LSP: Disable hover capability from Ruff
-              client.server_capabilities.hoverProvider = false
-            end)
-
-            opt.enable()
-          end,
-        },
-        nixd = {
-          settings = {
-            nixd = {
-              nixpkgs = {
-                expr = "import <nixpkgs> { }",
-              },
-              formatting = {
-                command = { "nixfmt" },
-              },
-              options = {
-                home_manager = {
-                  expr = '(builtins.getFlake (toString ./.)).homeConfigurations.' .. os.getenv("USER") .. '.options',
+          lua_ls = {
+            settings = {
+              Lua = {
+                workspace = {
+                  library = vim.api.nvim_get_runtime_file("", true),
+                },
+                completion = {
+                  callSnippet = "Replace",
                 },
               },
             },
           },
+          html = {}, -- vscode-langservers-extracted
+          gtkcssls = {
+            cmd = { "gtk-css-language-server" },
+            filetypes = { "css.gtk" }
+          },
+          cssls = {}, -- vscode-langservers-extracted
+          jsonls = {
+            settings = {
+              json = {
+                schemas = require("schemastore").json.schemas(),
+                validate = { enable = true },
+              },
+            },
+          }, -- vscode-langservers-extracted
+          yamlls = {
+            settings = {
+              yaml = {
+                schemaStore = {
+                  enable = false,
+                  url = "",
+                },
+                schemas = require("schemastore").yaml.schemas(),
+              },
+            },
+          }, -- yaml-language-server
+          basedpyright = {
+            settings = {
+              basedpyright = {
+                analysis = {
+                  typeCheckingMode = "off",
+                },
+              },
+            },
+          },
+          ruff = {
+            config = function(opt)
+              -- https://docs.astral.sh/ruff/editors/setup/#neovim
+              opt.on_attach(function(client)
+                -- LSP: Disable hover capability from Ruff
+                client.server_capabilities.hoverProvider = false
+              end)
 
+              opt.enable()
+            end,
+          },
+          nixd = {
+            settings = {
+              nixd = {
+                nixpkgs = {
+                  expr = "import <nixpkgs> { }",
+                },
+                formatting = {
+                  command = { "nixfmt" },
+                },
+                options = {
+                  home_manager = {
+                    expr = '(builtins.getFlake (toString ./.)).homeConfigurations.' .. os.getenv("USER") .. '.options',
+                  },
+                },
+              },
+            },
+          },
+          terraformls = {},
         },
-        terraformls = {},
-      },
-    },
+      }
+    end,
     config = function(_, opts)
       for server, server_opts in pairs(opts.servers) do
         local user_config = server_opts.config
