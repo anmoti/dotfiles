@@ -31,6 +31,9 @@ return {
       },
       indent = {
         enabled = true,
+        chunk = {
+          enabled = true,
+        }
       },
       terminal = {
         enabled = true,
