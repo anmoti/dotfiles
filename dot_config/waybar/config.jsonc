@@ -54,7 +54,7 @@
     "tooltip-format-wifi": "ESS ID: {essid}",
     "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
     "format-disconnected": " Disconnected",
-    "on-click": "term -t 'NetworkManager TUI' -f -e nmtui",
+    "on-click": "~/.local/bin/term -t 'NetworkManager TUI' -f -e nmtui",
     "interval": 2
   },
   // Right Modules
