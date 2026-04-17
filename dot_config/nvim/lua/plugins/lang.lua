@@ -168,6 +168,7 @@ return {
               },
             },
           },
+          docker_language_server = {},
           terraformls = {},
         },
       }

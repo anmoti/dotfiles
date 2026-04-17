@@ -68,6 +68,7 @@
         pkgu.ruff                           # neovim_lsp[ruff]
         pkgu.mypy                           # nvim-lsp[mypy]
         pkgu.nixd                           # neovim_lsp[nixd]
+        pkgu.docker-language-server         # neovim_lsp[docker-language-server]
         pkgu.terraform                      # terraform-ls
         pkgu.terraform-ls                   # neovim_lsp[terraformls]
         pkgu.copilot-language-server        # copilot.lua
