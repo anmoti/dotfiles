@@ -13,6 +13,13 @@ return {
         return {
           LineNr = { fg = colors.overlay1 },
           CursorLineNr = { fg = colors.peach },
+          SnacksIndent1 = { fg = colors.red },
+          SnacksIndent3 = { fg = colors.peach },
+          SnacksIndent4 = { fg = colors.yellow },
+          SnacksIndent5 = { fg = colors.green },
+          SnacksIndent6 = { fg = colors.sky },
+          SnacksIndent7 = { fg = colors.blue },
+          SnacksIndent8 = { fg = colors.mauve },
         }
       end,
       auto_integrations = true,
