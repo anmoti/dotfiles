@@ -13,6 +13,13 @@ return {
         return {
           LineNr = { fg = colors.overlay1 },
           CursorLineNr = { fg = colors.peach },
+
+          LspInlayHint = {
+            fg = colors.overlay1,
+            bg = colors.surface0,
+            style = { "italic" },
+          },
+
           SnacksIndent1 = { fg = colors.red },
           SnacksIndent3 = { fg = colors.peach },
           SnacksIndent4 = { fg = colors.yellow },

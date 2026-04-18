@@ -136,6 +136,13 @@ return {
               basedpyright = {
                 analysis = {
                   typeCheckingMode = "off",
+                  inlayHints = {
+                    variableTypes = true,
+                    callArgumentNames = true,
+                    callArgumentNamesMatching = false,
+                    functionReturnTypes = true,
+                    genericTypes = true,
+                  },
                 },
               },
             },
@@ -189,6 +196,7 @@ return {
             vim.api.nvim_create_autocmd("LspAttach", {
               group = vim.api.nvim_create_augroup("lsp-" .. server .. "-attach", { clear = true }),
               callback = function(args)
+                vim.lsp.inlay_hint.enable(true)
                 local client = vim.lsp.get_client_by_id(args.data.client_id)
                 if client and client.name == server then
                   fn(client, args)
