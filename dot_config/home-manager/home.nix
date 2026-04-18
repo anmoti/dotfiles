@@ -18,7 +18,7 @@
     pkgs.gh             # dot_gitconfig
     pkgs.brightnessctl  # change-brightness
     pkgs.ddcutil        # change-brightness
-    pkgs.playerctl      # hyprlock(songdetail)
+    pkgs.playerctl      # hyprland(bind.conf), hyprlock(songdetail)
 
     # GUI Deps
     pkgs.nwg-drawer     # waybar

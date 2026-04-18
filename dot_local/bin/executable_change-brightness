@@ -1,12 +1,23 @@
 #!/bin/bash
 
+for cmd in jq awk hyprctl ddcutil brightnessctl flock; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Error: Required command '$cmd' is not installed." >&2
+    exit 1
+  fi
+done
+
 STATE_FILE="/tmp/bright_state.json"
 STATE_LOCK="/tmp/bright_state.lock"
 LOCK_FILE="/tmp/bright.lock"
 
+EXP_FACTOR=2
+MIN_PERCENT=4
+
 if [ ! -s "$STATE_FILE" ] || ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
   echo "{}" > "$STATE_FILE"
 fi
+
 # example: {
 #   "HDMI-A-1_MODEL_SERIAL": {
 #     "input": "+0",
@@ -26,6 +37,31 @@ update_state() {
 
   flock -u 8
   exec 8>&-
+}
+
+# ハードウェア値から体感パーセンテージ(0-100)を計算
+calc_percentage() {
+  local val="$1"
+  local max="$2"
+  awk -v v="$val" -v m="$max" -v e="$EXP_FACTOR" 'BEGIN {
+    if (m == 0) { print 0; exit }
+    p = 100 * ((v / m) ^ (1.0 / e))
+    printf "%.0f\n", p
+  }'
+}
+
+# 体感パーセンテージ(0-100)からハードウェア値を計算
+calc_hw_value() {
+  local p="$1"
+  local max="$2"
+  awk -v p="$p" -v m="$max" -v e="$EXP_FACTOR" -v min_val="$MIN_PERCENT" 'BEGIN {
+    v = m * ((p / 100) ^ e)
+    # 値が0より大きく、かつ最小値を下回る場合は最小値に制限
+    if (v > 0 && v < min_val) v = min_val
+    if (v < 0) v = 0
+    if (v > m) v = m
+    printf "%.0f\n", v
+  }'
 }
 
 get_target_monitor_name() {
@@ -96,7 +132,7 @@ case "$1" in
       get_ddc_value
     fi
 
-    PERCENTAGE=$(( VALUE * 100 / MAX_VALUE ))
+    PERCENTAGE=$(calc_percentage "$VALUE" "$MAX_VALUE")
 
     jq -n --argjson p "$PERCENTAGE" '{"percentage": $p}' | jq --unbuffered --compact-output
     ;;
@@ -115,7 +151,7 @@ case "$1" in
     MONITOR_NAME="$(get_target_monitor_name)"
 
     if [ "$MONITOR_NAME" == "eDP-1" ]; then
-      brightnessctl set "${NUM}%${SIGN}"
+      brightnessctl -e"$EXP_FACTOR" -n"$MIN_PERCENT" set "${NUM}%${SIGN}"
     else
       resolve_monitor_info "$MONITOR_NAME"
 
@@ -174,13 +210,25 @@ case "$1" in
           P_SIGN="${BASH_REMATCH[1]}"
           P_NUM=${BASH_REMATCH[2]}
 
-          if [[ "$P_SIGN" == "" ]]; then
-            ddcutil setvcp 10 "$P_NUM" --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL"
+          get_ddc_value
+          PERCENTAGE=$(calc_percentage "$VALUE" "$MAX_VALUE")
+
+          if [[ "$P_SIGN" == "+" ]]; then
+            NEW_PERCENTAGE=$(( PERCENTAGE + P_NUM ))
+          elif [[ "$P_SIGN" == "-" ]]; then
+            NEW_PERCENTAGE=$(( PERCENTAGE - P_NUM ))
           else
-            ddcutil setvcp 10 "$P_SIGN" "$P_NUM" --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL"
+            NEW_PERCENTAGE=$P_NUM
           fi
 
-          remove_ddc_cache
+          if (( NEW_PERCENTAGE > 100 )); then NEW_PERCENTAGE=100; fi
+          if (( NEW_PERCENTAGE < 0 )); then NEW_PERCENTAGE=0; fi
+
+          NEW_VALUE=$(calc_hw_value "$NEW_PERCENTAGE" "$MAX_VALUE")
+
+          ddcutil setvcp 10 "$NEW_VALUE" --model "$MONITOR_MODEL" --sn "$MONITOR_SERIAL"
+
+          update_ddc_cache "$NEW_VALUE" "$MAX_VALUE"
         fi
       done
 
