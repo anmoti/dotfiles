@@ -131,6 +131,9 @@ return {
               },
             },
           }, -- yaml-language-server
+          taplo = {
+            -- taplo has built-in support for schema store.
+          },
           basedpyright = {
             settings = {
               basedpyright = {
