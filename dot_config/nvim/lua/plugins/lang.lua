@@ -146,7 +146,7 @@ return {
                     callArgumentNames = true,
                     callArgumentNamesMatching = false,
                     functionReturnTypes = true,
-                    genericTypes = true,
+                    genericTypes = false,
                   },
                 },
               },
