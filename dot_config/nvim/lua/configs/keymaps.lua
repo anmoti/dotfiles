@@ -8,6 +8,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
       buffer = args.buf,
       desc = "LSP Code Action",
     })
+
+    vim.keymap.set("n", "<leader>lr", vim.lsp.buf.rename, {
+      buffer = args.buf,
+      desc = "LSP Rename",
+    })
   end,
 })
 
