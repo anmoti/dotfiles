@@ -5,14 +5,16 @@
   home.homeDirectory = "/home/anmoti";
   home.stateVersion = "25.11";
 
-  home.packages = [
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
 
+  home.shellAliases = {
+    docker = "podman";
+  };
+
+  home.packages = [
     # CLI Deps
-    pkgs.oh-my-posh     # zshrc
-    pkgs.fd             # zshrc
-    pkgs.fzf            # zshrc
-    pkgs.bat            # zshrc
-    pkgs.zoxide         # zshrc
     pkgs.wl-clipboard   # satty
     pkgs.doppler        # chezmoi
     pkgs.gh             # dot_gitconfig
@@ -25,6 +27,7 @@
 
     # CLI Apps
     pkgu.chezmoi
+    pkgs.docker-compose
     pkgs.terraform
     pkgu.wakatime-cli
 
@@ -41,12 +44,35 @@
 
   ] ++ packages.wallpapers;
 
-  programs.home-manager.enable = true;
   fonts.fontconfig.enable = true;
+
+  programs.home-manager = {
+    enable = true;
+  };
+
+  programs.zsh = {
+    enable = true;
+    autosuggestion.enable = true;
+    historySubstringSearch.enable = true;
+    syntaxHighlighting.enable = true;
+    oh-my-zsh = {
+      enable = true;
+      plugins = [
+        "git"
+      ];
+    };
+  };
+
+  programs.zoxide.enable = true;
+
+  programs.oh-my-posh = {
+    enable = true;
+    configFile = "~/.config/oh-my-posh/default.omp.json";
+  };
 
   programs.neovim = {
     enable = true;
-
+    defaultEditor = true;
     extraWrapperArgs = [
       "--run" "export HOST_PATH=$PATH"
       "--set" "PATH" (lib.makeBinPath [
