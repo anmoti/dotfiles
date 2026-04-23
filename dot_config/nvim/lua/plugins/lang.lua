@@ -16,7 +16,10 @@ return {
   {
     "saghen/blink.cmp",
     version = "*",
-    dependencies = { "fang2hou/blink-copilot" },
+    dependencies = {
+      "fang2hou/blink-copilot",
+      "rafamadriz/friendly-snippets",
+    },
     ---@module "blink.cmp"
     ---@type blink.cmp.Config
     opts = {
@@ -24,7 +27,7 @@ return {
         preset = "super-tab",
       },
       sources = {
-        default = { "lazydev", "lsp", "copilot", "path", "snippets", "buffer" },
+        default = { "lazydev", "lsp", "path", "snippets", "copilot", "buffer" },
         providers = {
           lazydev = {
             name = "lazyDev",
@@ -34,7 +37,6 @@ return {
           copilot = {
             name = "copilot",
             module = "blink-copilot",
-            score_offset = 100,
             async = true,
           },
         },
