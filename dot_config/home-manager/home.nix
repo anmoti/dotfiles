@@ -28,7 +28,6 @@
     # CLI Apps
     pkgu.chezmoi
     pkgs.docker-compose
-    pkgs.terraform
     pkgu.wakatime-cli
 
     # Font Deps
@@ -41,7 +40,6 @@
     pkgs.hackgen-font
     pkgs.hackgen-nf-font
     pkgs.nerd-fonts.symbols-only
-
   ] ++ packages.wallpapers;
 
   fonts.fontconfig.enable = true;
@@ -96,8 +94,6 @@
         pkgs.mypy                           # nvim-lsp[mypy]
         pkgs.nixd                           # neovim_lsp[nixd]
         pkgs.docker-language-server         # neovim_lsp[docker-language-server]
-        pkgs.terraform                      # terraform-ls
-        pkgs.terraform-ls                   # neovim_lsp[terraformls]
         pkgs.copilot-language-server        # copilot.lua
 
         pkgu.chezmoi                        # chezmoi.nvim
