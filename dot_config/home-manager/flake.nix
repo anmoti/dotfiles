@@ -52,5 +52,11 @@
         extraSpecialArgs = { inherit pkgu; packages = localPackages; };
         modules = [ ./home.nix ];
       };
+
+      homeConfigurations."anmoti@LEGION5" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = { inherit pkgu; packages = localPackages; };
+        modules = [ ./home.nix ./profiles/desktop.nix ];
+      };
     };
 }
