@@ -1,6 +1,10 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
+  systemd.user.sessionVariables = {
+    SHELL = "${pkgs.zsh}/bin/zsh";
+  };
+
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
