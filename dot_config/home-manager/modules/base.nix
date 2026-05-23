@@ -24,5 +24,6 @@
     pkgu.chezmoi
     pkgs.docker-compose
     pkgu.wakatime-cli
+    pkgs.opentofu
   ];
 }
