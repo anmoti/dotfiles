@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TITLE="kitty"
-CLASS="kitty"
+TITLE="Alacritty"
+CLASS="Alacritty"
 FLOATING=false
 COMMAND="$SHELL"
 
@@ -31,10 +31,9 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ "$FLOATING" = true ]; then
-    if [ "$CLASS" = "kitty" ]; then
-        CLASS="kittyFloat"
+    if [ "$CLASS" = "Alacritty" ]; then
+        CLASS="AlacrittyFloat"
     fi
 fi
 
-# shellcheck disable=SC2086
-kitty --title "$TITLE" --class "$CLASS" $COMMAND
+alacritty --title "$TITLE" --class "$CLASS" --command "$COMMAND"

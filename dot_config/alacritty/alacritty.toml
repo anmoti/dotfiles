@@ -1,7 +1,5 @@
 [general]
-import = [
-  "./catppuccin-mocha.toml"
-]
+import = ["./catppuccin-mocha.toml"]
 
 [window]
 padding = { x = 5, y = 5 }
