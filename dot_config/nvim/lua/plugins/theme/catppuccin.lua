@@ -20,13 +20,16 @@ return {
             style = { "italic" },
           },
 
+          -- https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md
+          -- Rainbow order: Red, Peach, Yellow, Green, Sapphire, Lavender
           SnacksIndent1 = { fg = colors.red },
-          SnacksIndent3 = { fg = colors.peach },
-          SnacksIndent4 = { fg = colors.yellow },
-          SnacksIndent5 = { fg = colors.green },
-          SnacksIndent6 = { fg = colors.sky },
-          SnacksIndent7 = { fg = colors.blue },
-          SnacksIndent8 = { fg = colors.mauve },
+          SnacksIndent2 = { fg = colors.peach },
+          SnacksIndent3 = { fg = colors.yellow },
+          SnacksIndent4 = { fg = colors.green },
+          SnacksIndent5 = { fg = colors.sapphire },
+          SnacksIndent6 = { fg = colors.lavender },
+          SnacksIndent7 = { fg = colors.teal },
+          SnacksIndent8 = { fg = colors.blue },
         }
       end,
       auto_integrations = true,
@@ -34,8 +37,6 @@ return {
     config = function(_, opts)
       require("catppuccin").setup(opts)
       vim.cmd.colorscheme("catppuccin")
-
-      vim.api.nvim_set_hl(0, "SnacksExplorer", { bg = "NONE" })
     end,
   },
 }
