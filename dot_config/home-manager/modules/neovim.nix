@@ -5,6 +5,46 @@
     enable = true;
     package = pkgu.neovim-unwrapped;
 
+    plugins = with pkgs.vimPlugins.nvim-treesitter-parsers; [
+      # markup
+      markdown
+      markdown_inline
+      html
+      latex
+      xml
+      # code
+      c
+      cpp
+      go
+      c_sharp
+      python
+      php
+      javascript
+      typescript
+      tsx
+      svelte
+      astro
+      css
+      # scripting
+      bash
+      lua
+      nix
+      dockerfile
+      # config
+      ini
+      json
+      json5
+      jsonc
+      toml
+      yaml
+      hcl
+      # neovim internals
+      vim
+      vimdoc
+      regex
+      query
+    ];
+
     defaultEditor = true;
     extraWrapperArgs = [
       "--run" "export HOST_PATH=$PATH"

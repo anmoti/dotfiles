@@ -21,6 +21,13 @@ require("lazy").setup({
     enabled = true,
     notify = true,
   },
+  performance = {
+    rtp = {
+      -- Preserve nix-installed plugins (treesitter parsers etc.) in rtp,
+      -- since lazy.nvim resets rtp by default.
+      paths = vim.fn.globpath(vim.o.packpath, "pack/*/start/*", false, true),
+    },
+  },
   spec = {
     { import = "plugins.theme.catppuccin" },
     { import = "plugins" },
