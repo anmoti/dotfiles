@@ -1,0 +1,18 @@
+[user]
+	name = anmoti
+	email = 77442643+anmoti@users.noreply.github.com
+	signingkey = ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCvUlMu/ZOj7IJsdaChFQghNeHVG47mVk+gPBmgd8keLTCYNv7EN5Mpk64DBpe0eMpDbW6HYAHJnbOmVFKMPqN9n8QymS4At21/AYCzf8xudKI0kHVXeAp11MHTtzXXNGPrdJMYBsU8a9tV1nQCp39eojV3hFrWyWpqeb0ra3YnM9fK+gFSYDEPtE8bTmzEQFNTECPGL+h+m+7xdsrTe0aWQWIs0qnsKElpowE5n5T8pfkCb+U2yVHocx5sc4PT/+fGH3/pEgnxHkJI70ugoQUFCf8KAkFNQg4NrSJiF79969YFfBEkZRUpKaINZAJ47EdxsVdvNjmzxPAoOz7/Dj4l
+{{ if stat "/opt/1Password/op-ssh-sign" -}}
+[commit]
+	gpgsign = true
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /opt/1Password/op-ssh-sign
+{{ end -}}
+[credential "https://github.com"]
+	helper =
+	helper = !{{ .chezmoi.homeDir }}/.nix-profile/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !{{ .chezmoi.homeDir }}/.nix-profile/bin/gh auth git-credential
