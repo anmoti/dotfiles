@@ -53,21 +53,4 @@ return {
     event = "VeryLazy",
     opts = {},
   },
-  {
-    "catgoose/nvim-colorizer.lua",
-    event = "BufReadPre",
-    opts = {
-      user_default_options = {
-        names = true,
-        RGB = true,
-        RRGGBB = true,
-        RRGGBBAA = true,
-        rgb_fn = true,
-        hsl_fn = true,
-        oklch_fn = true,
-        tailwind = true,
-        background = true,
-      },
-    },
-  },
 }
