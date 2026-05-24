@@ -8,58 +8,47 @@
 
 @import "./catppuccin-mocha.theme.css";
 
-@define-color highlight #685878;
-@define-color warning-bg rgba(255, 200, 200, 0.7);
-/* #ffc8de */
-@define-color warning-text rgba(51, 40, 40, 1);
-/* #33282c */
-
 @keyframes blink-warning {
-  70% {
-    color: white;
+  from {
+    color: @yellow;
   }
 
   to {
-    color: white;
-    background-color: orange;
+    color: @base;
+    background-color: @yellow;
   }
 }
 
 @keyframes blink-critical {
-  70% {
-    color: @text;
+  from {
+    color: @red;
   }
 
   to {
-    color: @text;
+    color: @base;
     background-color: @red;
   }
-}
-
-/* Reset all styles */
-* {
-  all: unset;
 }
 
 #waybar,
 tooltip,
 menu {
-  border: 2px solid @surface0;
-  border-radius: 5px;
   color: @text;
-  font-size: 16px;
   font-family: "Symbols Nerd Font Mono", "JetBrains Mono";
   background-color: alpha(@base, 0.85);
 }
 
 #waybar {
+  border: 2px solid @surface0;
   border-radius: 0 0 5px 5px;
   border-top: none;
+  font-size: 16px;
 }
 
+tooltip,
 menu {
-  padding: 5px;
   border-color: @surface1;
+  font-size: 15px;
 }
 
 #custom-launcher {
@@ -67,31 +56,76 @@ menu {
 }
 
 #workspaces button {
+  all: unset;
   border-radius: 0.5rem 0.5rem 0 0;
   padding: 0 0.5rem;
   margin-top: 0.2rem;
 }
 
 #workspaces button:hover {
-  background-color: alpha(@subtext0, 0.2);
+  background-color: alpha(@overlay2, 0.2);
 }
 
 #workspaces button.active {
-  color: @surface0;
+  color: @base;
   background-color: @teal;
 }
 
 #workspaces button.urgent {
-  color: @warning-text;
-  background-color: @warning-bg;
+  color: @base;
+  background-color: @maroon;
 }
 
 #window {
   font-size: 0.8rem;
   font-weight: bold;
-  border-bottom: 1px solid currentColor;
+  border-bottom: 1px solid;
   padding: 0 0.3rem;
   margin: 0.2rem;
+}
+
+#network.disconnected {
+  color: @yellow;
+}
+
+
+#cpu.warning {
+  color: @yellow;
+}
+
+#cpu.critical {
+  color: @red;
+}
+
+#memory.warning {
+  color: @yellow;
+}
+
+#memory.critical {
+  animation: blink-critical 2s linear infinite alternate;
+  padding: 0 0.5rem;
+}
+
+#pulseaudio.muted {
+  color: @overlay1;
+}
+
+#battery.warning {
+  color: @yellow;
+}
+
+#battery.critical {
+  color: @red;
+}
+
+#battery.warning.discharging {
+  animation: blink-warning 3s linear infinite alternate;
+  padding: 0 0.5rem;
+}
+
+#battery.critical.discharging {
+  animation: blink-critical 2s linear infinite alternate;
+  padding: 0 0.5rem;
 }
 
 #tray {
@@ -100,66 +134,4 @@ menu {
 
 #custom-power {
   padding: 0 0.7rem;
-}
-
-
-
-#network.disconnected {
-  color: orange;
-}
-
-#cpu.warning {
-  color: orange;
-}
-
-#cpu.critical {
-  color: @red;
-}
-
-#memory {
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-#memory.warning {
-  color: orange;
-}
-
-#memory.critical {
-  color: red;
-  animation-name: blink-critical;
-  animation-duration: 2s;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#pulseaudio {}
-
-#pulseaudio.muted {
-  color: @highlight;
-}
-
-#battery {
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-#battery.warning {
-  color: orange;
-}
-
-#battery.critical {
-  color: @maroon;
-}
-
-#battery.warning.discharging {
-  animation-name: blink-warning;
-  animation-duration: 3s;
-}
-
-#battery.critical.discharging {
-  animation-name: blink-critical;
-  animation-duration: 2s;
 }
