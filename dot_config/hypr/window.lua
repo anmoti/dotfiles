@@ -124,23 +124,19 @@ hl.window_rule({
 })
 
 hl.window_rule({
-  name = "youtube-music",
+  name  = "youtube-music",
   match = { class = "com.github.th_ch.youtube_music" },
   opacity = t.opacity_str(t.opacity.media, t.opacity.dim),
-  monitor = "0",
-  workspace = "9",
 })
 
 hl.window_rule({
-  name = "jquake",
+  name  = "jquake",
   match = {
     class = "net-jquake-app-Main",
-    title = "JQuake" -- 設定ウィンドウに影響を与えないため指定
+    title = "JQuake", -- 設定ウィンドウに影響を与えないため指定
   },
-  float = false,
+  float   = false,
   opacity = t.opacity_str(t.opacity.media, t.opacity.dim),
-  monitor = "0",
-  workspace = "10",
 })
 
 hl.window_rule({

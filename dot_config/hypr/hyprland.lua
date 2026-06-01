@@ -14,6 +14,7 @@ require("window")
 require("bind")
 
 local apps = require("apps")
+require("persistent")
 -------------------
 ---- AUTOSTART ----
 -------------------
