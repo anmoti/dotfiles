@@ -4,6 +4,9 @@
   programs.neovim = {
     enable = true;
     package = pkgu.neovim-unwrapped;
+    withRuby = false;
+    withPython3 = false;
+    sideloadInitLua = true;
 
     plugins = with pkgs.vimPlugins.nvim-treesitter-parsers; [
       # markup
@@ -34,7 +37,6 @@
       ini
       json
       json5
-      jsonc
       toml
       yaml
       hcl
