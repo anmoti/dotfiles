@@ -71,6 +71,8 @@
         pkgs.mypy                           # nvim-lsp[mypy]
         pkgs.nixd                           # neovim_lsp[nixd]
         pkgs.docker-language-server         # neovim_lsp[docker-language-server]
+        pkgs.opentofu                       # neovim_lsp[tofu_ls] (schema, format)
+        pkgs.tofu-ls                        # neovim_lsp[tofu_ls]
         pkgs.copilot-language-server        # copilot.lua
 
         pkgs.sioyek                         # VimTeX

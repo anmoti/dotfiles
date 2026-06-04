@@ -185,6 +185,7 @@ return {
             },
           },
           docker_language_server = {},
+          tofu_ls = {},
         },
       }
     end,

@@ -1,6 +1,8 @@
 vim.filetype.add({
   extension = {
     tf = "terraform",
+    tofu = "opentofu",
+    tfvars = "opentofu-vars",
   },
   pattern = {
     [".*%.gtk%.css"] = "css.gtk",
