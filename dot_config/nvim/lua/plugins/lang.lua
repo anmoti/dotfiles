@@ -144,7 +144,7 @@ return {
             settings = {
               basedpyright = {
                 analysis = {
-                  typeCheckingMode = "off",
+                  typeCheckingMode = "strict",
                   inlayHints = {
                     variableTypes = true,
                     callArgumentNames = true,
@@ -225,22 +225,22 @@ return {
       end
     end,
   },
-  {
-    "mfussenegger/nvim-lint",
-    config = function()
-      -- https://github.com/MartinLwx/dotfiles/blob/864e4b6/nvim/lua/plugins/nvim-lint.lua
-      local lint = require("lint")
-
-      lint.linters_by_ft = {
-        python = { "mypy" },
-      }
-
-      vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
-        group = vim.api.nvim_create_augroup("nvim-lint-setup", { clear = true }),
-        callback = function()
-          lint.try_lint()
-        end,
-      })
-    end,
-  },
+  -- {
+  --   "mfussenegger/nvim-lint",
+  --   config = function()
+  --     -- https://github.com/MartinLwx/dotfiles/blob/864e4b6/nvim/lua/plugins/nvim-lint.lua
+  --     local lint = require("lint")
+  --
+  --     lint.linters_by_ft = {
+  --       python = { "mypy" },
+  --     }
+  --
+  --     vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
+  --       group = vim.api.nvim_create_augroup("nvim-lint-setup", { clear = true }),
+  --       callback = function()
+  --         lint.try_lint()
+  --       end,
+  --     })
+  --   end,
+  -- },
 }
