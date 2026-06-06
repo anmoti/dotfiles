@@ -190,6 +190,16 @@ return {
       }
     end,
     config = function(_, opts)
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("lsp-diagnostic-boolean-fix", { clear = true }),
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if client and client.server_capabilities.diagnosticProvider == true then
+            client.server_capabilities.diagnosticProvider = {}
+          end
+        end,
+      })
+
       for server, server_opts in pairs(opts.servers) do
         local user_config = server_opts.config
         server_opts.config = nil
