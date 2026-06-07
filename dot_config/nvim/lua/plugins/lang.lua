@@ -18,11 +18,18 @@ return {
     version = "*",
     dependencies = {
       "fang2hou/blink-copilot",
-      "rafamadriz/friendly-snippets",
+      {
+        "L3MON4D3/LuaSnip",
+        dependencies = { "rafamadriz/friendly-snippets" },
+        config = function()
+          require("luasnip.loaders.from_vscode").lazy_load()
+        end,
+      },
     },
     ---@module "blink.cmp"
     ---@type blink.cmp.Config
     opts = {
+      snippets = { preset = "luasnip" },
       keymap = {
         preset = "super-tab",
       },
