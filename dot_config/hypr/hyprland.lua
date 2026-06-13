@@ -164,5 +164,11 @@ require("plugins/hyprbars")
 
 -- Load ~/.config/hypr/local.lua if it exists
 -- Put machine-specific settings there
-local localConfig = loadfile(os.getenv("HOME") .. "/.config/hypr/local.lua")
-if localConfig then localConfig() end
+local home = os.getenv("HOME") or "/home/anmoti"
+local path = home .. "/.config/hypr/local.lua"
+local localConfig, err = loadfile(path)
+if localConfig then
+  localConfig()
+else
+  hl.notify("local.lua load failed: " .. tostring(err))
+end

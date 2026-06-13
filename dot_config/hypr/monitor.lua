@@ -57,7 +57,8 @@ hl.monitor({
   mode = string.format("%dx%d@100.00", xiao.w, xiao.h),
   position = string.format("%dx%d", xiao.x, xiao.y),
   scale = "1.00",
-  transform = transform.horizontal_reverse
+  vrr = 1,
+  transform = transform.horizontal_reverse,
 })
 
 ---@type Monitor

@@ -15,16 +15,20 @@ local apps = {
     monitor = 0
   },
   {
+    name = "steam",
+    match = { class = "steam" },
+  },
+  {
     name = "youtube-music",
     match = { class = "com.github.th_ch.youtube_music" },
     monitor = 0
   },
   {
-    name  = "legcord",
+    name = "legcord",
     match = { class = "legcord" },
   },
   {
-    name  = "teams-for-linux",
+    name = "teams-for-linux",
     match = { class = "teams-for-linux" },
   },
 }
