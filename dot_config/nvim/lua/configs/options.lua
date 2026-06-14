@@ -16,7 +16,7 @@ vim.opt.softtabstop = 2
 vim.opt.fixendofline = true
 
 vim.opt.list = true
-vim.opt.listchars = { tab = ">.", trail = "_" }
+vim.opt.listchars = { tab = ">.", trail = " " }
 
 vim.g.python_indent = {
   closed_paren_align_last_line = false,
