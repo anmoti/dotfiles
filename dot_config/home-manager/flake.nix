@@ -20,17 +20,11 @@
     let
       system = "x86_64-linux";
 
-      config = {
-        allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-          "copilot-language-server"
-        ];
-      };
-
       pkgs = import nixpkgs {
-        inherit system config;
+        inherit system;
       };
       pkgu = import nixpkgs-unstable {
-        inherit system config;
+        inherit system;
       };
 
       wallpaperPkgs =
@@ -51,6 +45,7 @@
         gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
         wallpapers = wallpaperPkgs;
         claude-code = llm-agents.packages.${system}.claude-code;
+        copilot-language-server = llm-agents.packages.${system}.copilot-language-server;
       };
     in {
       packages.${system} = localPackages;

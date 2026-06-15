@@ -73,7 +73,7 @@
         pkgs.docker-language-server         # neovim_lsp[docker-language-server]
         pkgs.opentofu                       # neovim_lsp[tofu_ls] (schema, format)
         pkgs.tofu-ls                        # neovim_lsp[tofu_ls]
-        pkgs.copilot-language-server        # copilot.lua
+        packages.copilot-language-server    # copilot.lua
         packages.claude-code                # claudecode.nvim
 
         pkgs.sioyek                         # VimTeX
