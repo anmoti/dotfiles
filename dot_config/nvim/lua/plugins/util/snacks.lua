@@ -170,6 +170,13 @@ return {
           local nvim_path = vim.env.PATH
 
           Snacks.terminal.toggle(nil, {
+            win = {
+              position = "right",
+              width = 0.3,
+              keys = {
+                zoom = { "<C-f>", function() Snacks.zen.zoom() end, mode = "t", desc = "Zoom terminal" },
+              },
+            },
             env = {
               PATH = nvim_path .. (host_path and (":" .. host_path) or ""),
             },
