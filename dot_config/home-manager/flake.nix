@@ -48,7 +48,7 @@
         copilot-language-server = llm-agents.packages.${system}.copilot-language-server;
       };
     in {
-      packages.${system} = localPackages;
+      packages.${system} = pkgs.lib.filterAttrs (_: pkgs.lib.isDerivation) localPackages;
 
       homeConfigurations."anmoti" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
