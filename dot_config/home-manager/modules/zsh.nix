@@ -22,6 +22,6 @@
 
   programs.oh-my-posh = {
     enable = true;
-    configFile = "~/.config/oh-my-posh/default.omp.json";
+    configFile = "~/.config/oh-my-posh/default.omp.yaml";
   };
 }

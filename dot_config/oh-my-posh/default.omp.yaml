@@ -1,0 +1,166 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+version: 4
+console_title_template: "{{.Shell}}{{if .Root}} [Root]{{end}} | {{.PWD}}"
+
+palette:
+  rosewater: "#F5E0DC"
+  flamingo: "#F2CDCD"
+  pink: "#F5C2E7"
+  mauve: "#CBA6F7"
+  red: "#F38BA8"
+  maroon: "#EBA0AC"
+  peach: "#FAB387"
+  yellow: "#F9E2AF"
+  green: "#A6E3A1"
+  teal: "#94E2D5"
+  sky: "#89DCEB"
+  sapphire: "#74C7EC"
+  blue: "#89B4FA"
+  lavender: "#B4BEFE"
+  text: "#CDD6F4"
+  subtext1: "#BAC2DE"
+  subtext0: "#A6ADC8"
+  overlay2: "#9399B2"
+  overlay1: "#7F849C"
+  overlay0: "#6C7086"
+  surface2: "#585B70"
+  surface1: "#45475A"
+  surface0: "#313244"
+  base: "#1E1E2E"
+  mantle: "#181825"
+  crust: "#11111B"
+
+blocks:
+  - type: prompt
+    alignment: left
+    segments:
+      - type: text
+        style: plain
+        force: true
+  - type: prompt
+    alignment: left
+    newline: true
+    segments:
+      - type: os
+        style: powerline
+        template: " {{ .Icon }}{{ if .WSL }} (WSL){{ end }} {{ .HostName }}@{{ .UserName }} "
+        foreground: p:text
+        foreground_templates:
+          - '{{ if eq "windows" .OS }}#0079F5{{end}}'
+          - '{{ if eq "arch"    .OS }}#1791CF{{end}}'
+          - '{{ if eq "cachyos" .OS }}#82DCCC{{end}}'
+        background: p:surface0
+        background_templates:
+          - '{{ if eq "windows" .OS }}#E6F2FB{{end}}'
+          - '{{ if eq "arch"    .OS }}#E8F4FA{{end}}'
+          - '{{ if eq "cachyos" .OS }}#1A2C29{{end}}'
+        options:
+          # yaml-language-server-disable Property cachyos is not allowed.
+          cachyos: "\uF303" # 
+          macos: mac
+      - type: path
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uF07B {{ .Path }} " # 
+        foreground: p:base
+        background: p:sapphire
+        options:
+          style: unique
+      - type: git
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " {{ .UpstreamIcon }} {{ .HEAD }} {{if .BranchStatus }}{{ .BranchStatus }} {{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} "
+        foreground: p:base
+        background: p:lavender
+        background_templates:
+          - "{{ if or (.Working.Changed) (.Staging.Changed) }}p:yellow{{ end }}"
+          - "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:red{{ end }}"
+          - "{{ if gt .Ahead 0 }}p:pink{{ end }}"
+          - "{{ if gt .Behind 0 }}p:pink{{ end }}"
+        options:
+          fetch_status: true
+          fetch_upstream_icon: true
+          git_icon: "\uE702" # 
+          branch_icon: " "
+          rebase_icon: "\uF47F" # 
+          merge_icon: "\uEAFE" # 
+      - type: node
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uED0D <#d0d2d0>{{ .Full }}</> " # 
+        foreground: "#68a063"
+        background: "#152014"
+        options:
+          extensions:
+            - package.json
+      - type: npm
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uED0E <#322f2f>{{ .Full }}</> " # 
+        foreground: "#cb3837"
+        background: "#faebeb"
+        options:
+          extensions:
+            - package-lock.json
+      - type: pnpm
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uE865 <#d6d2cd>{{ .Full }}</> " # 
+        foreground: "#f69220"
+        background: "#311d06"
+        options:
+          extensions:
+            - pnpm-lock.yaml
+      - type: deno
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uE7C0 <#2a2a2a>{{ .Full }}</> " # 
+        foreground: "#262626"
+        background: "#d4d4d4"
+        options:
+          extensions:
+            - deno.json
+      - type: python
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        template: " \uE235 <#2f3031>{{ .Full }}</> " # 
+        foreground: "#3776ab"
+        background: "#ebf1f7"
+        options:
+          display_mode: context
+      - type: executiontime
+        style: diamond
+        leading_diamond: "\uE0D7" # 
+        template: " \U000F199F {{ .FormattedMs }} " # 󱦟
+        trailing_diamond: "\uE0B0" # 
+        foreground: p:base
+        background: p:mauve
+        options:
+          always_enabled: true
+          style: austin
+      - type: status
+        style: diamond
+        template: " {{ .Code }}"
+        trailing_diamond: "\uE0B4" # 
+        foreground: "p:base"
+        background: "p:green"
+        background_templates:
+          - "{{ if .Error }}p:red{{ end }}"
+        options:
+          always_enabled: true
+  - type: prompt
+    alignment: left
+    newline: true
+    segments:
+      - template: "\U000F140B " # 󱐋
+        foreground: "#ffff66"
+        type: root
+        style: diamond
+      - template: ❯❯
+        foreground: "#45f1c2"
+        type: text
+        style: plain
+
+final_space: true
