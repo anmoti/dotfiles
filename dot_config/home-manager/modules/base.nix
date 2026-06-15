@@ -1,4 +1,4 @@
-{ pkgs, pkgu, ... }:
+{ pkgs, pkgu, packages, ... }:
 
 {
   home.username = "anmoti";
@@ -25,5 +25,6 @@
     pkgs.docker-compose
     pkgu.wakatime-cli
     pkgs.opentofu
+    packages.claude-code
   ];
 }

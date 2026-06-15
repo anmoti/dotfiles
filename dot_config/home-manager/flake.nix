@@ -1,4 +1,9 @@
 {
+  nixConfig = {
+    extra-substituters = [ "https://cache.numtide.com" ];
+    extra-trusted-public-keys = [ "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -7,9 +12,11 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, home-manager, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, llm-agents, ... }:
     let
       system = "x86_64-linux";
 
@@ -43,6 +50,7 @@
         vscode-css-language-server = pkgs.callPackage ./pkgs/vscode-css-language-server/package.nix {};
         gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
         wallpapers = wallpaperPkgs;
+        claude-code = llm-agents.packages.${system}.claude-code;
       };
     in {
       packages.${system} = localPackages;
