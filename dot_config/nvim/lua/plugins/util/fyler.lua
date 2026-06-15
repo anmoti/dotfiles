@@ -1,23 +1,23 @@
 return {
   {
-    "A7Lavinraj/fyler.nvim",
+    "FylerOrg/fyler.nvim",
     dependencies = { "nvim-mini/mini.icons" },
     lazy = false,
     ---@module "fyler"
-    ---@type FylerSetup
+    ---@type fyler.UserConfig
     opts = {
       integrations = {
         icon = "mini_icons",
       },
-      views = {
-        ---@diagnostic disable: missing-fields
-        finder = {
-          default_explorer = true,
-          close_on_select = false,
-          watcher = {
-            enabled = true,
+      use_as_default_explorer = true,
+      kind = "floating",
+      kind_presets = {
+        floating = {
+          mappings = {
+            n = {
+              ["<CR>"] = { action = "select", args = { close = false } },
+            },
           },
-          win = { kind = "float", },
         },
       },
     },
