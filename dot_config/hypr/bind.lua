@@ -86,7 +86,7 @@ do
     local x = is_horizontal and amt or 0
     local y = is_horizontal and 0 or amt
 
-    hl.bind(MODC(dir), hl.dsp.window.resize({ x = x, y = y, relative = true }))
+    hl.bind(MODC(dir), hl.dsp.window.resize({ x = x, y = y, relative = true }), { repeating = true })
   end
 
   for i = 1, 10 do
