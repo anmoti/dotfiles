@@ -64,7 +64,6 @@ vivaldi
 grim
 slurp
 satty
-hyprpicker
 ```
 
 ### Brightness / Monitor
@@ -78,6 +77,11 @@ brightnessctl
 
 ```
 neovim
+```
+
+### Shell
+
+```
 oh-my-posh
 ```
 
