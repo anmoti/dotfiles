@@ -39,6 +39,11 @@ hm update
 hm list
 ```
 
+## Deleting Files
+
+chezmoi does **not** delete files from the home directory when they are removed from the source repository.
+When a file is removed from chezmoi source, always ask the user to manually delete the corresponding file from their home directory.
+
 ## chezmoi File Naming Conventions
 
 - `dot_` prefix → `.` in home directory (e.g., `dot_config/` → `~/.config/`)
@@ -76,7 +81,10 @@ dot_editorconfig       # EditorConfig
 Two configurations: `anmoti` (base) and `anmoti@LEGION5` (desktop, adds GUI/Wayland packages).
 Composed from `modules/` (base, zsh, neovim, fonts) and `profiles/`.
 
-Packages from two nixpkgs channels — `pkgs` (stable, `nixos-26.05`) and `pkgu` (unstable) — plus
+**Default channel: always use `pkgs` (`nixos-26.05`) unless the user explicitly requests unstable.**
+Use `pkgu` only when a package is unavailable in `pkgs` or the user specifically asks for the unstable version.
+
+Packages from two nixpkgs channels — `pkgs` (`nixos-26.05`) and `pkgu` (unstable) — plus
 `llm-agents.nix` (github:numtide/llm-agents.nix) for AI binaries (`claude-code`, `copilot-language-server`).
 The flake's `nixConfig` pre-configures `cache.numtide.com` as a binary substituter; without it these packages build from source.
 Custom packages live in `pkgs/`.

@@ -20,7 +20,6 @@ My dotfiles, managed with [chezmoi](https://www.chezmoi.io/).
 ```
 hyprland
 xdg-desktop-portal-hyprland
-hyprpaper
 hyprlock
 hyprpicker
 ```

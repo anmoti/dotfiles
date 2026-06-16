@@ -14,4 +14,12 @@
 
     pkgs.nwg-drawer     # waybar
   ] ++ packages.wallpapers;
+
+  programs.quickshell = {
+    enable = true;
+    systemd = {
+      enable = true;
+      target = "graphical-session.target";
+    };
+  };
 }

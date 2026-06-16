@@ -28,7 +28,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("hyprpm reload")
   hl.exec_cmd(apps.terminal)
   hl.exec_cmd("nm-applet")
-  hl.exec_cmd("waybar & hyprpaper & dunst &")
+  hl.exec_cmd("waybar & dunst &")
   hl.exec_cmd("systemctl --user start hyprpolkitagent")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
   hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'")
@@ -147,8 +147,8 @@ hl.config({
 
 hl.config({
   misc = {
-    force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
-    disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
+    force_default_wallpaper = 0,
+    disable_hyprland_logo   = true,
   },
 })
 
