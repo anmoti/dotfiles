@@ -78,21 +78,63 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "TermOpen" }, {
   end,
 })
 
+local function is_claude_code_buf(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  if vim.bo[buf].buftype ~= "terminal" then return false end
+  local ok, terminal = pcall(require, "claudecode.terminal")
+  if not ok then return false end
+  return terminal.get_active_terminal_bufnr() == buf
+end
+
+-- Stores Claude Code window width when a normal buffer window is closing alongside it.
+-- nil means inactive; a number means WinClosed should open the dashboard and restore that width.
+local claude_win_width_on_close = nil
+
 -- https://zenn.dev/vim_jp/articles/ff6cd224fab0c7
 vim.api.nvim_create_autocmd('QuitPre', {
   callback = function()
+    claude_win_width_on_close = nil
+
     if vim.bo.buftype == "terminal" then return end
 
     local current_win = vim.api.nvim_get_current_win()
     for _, win in ipairs(vim.api.nvim_list_wins()) do
       if win ~= current_win then
         local buf = vim.api.nvim_win_get_buf(win)
-        -- if any other window has a normal buffer, let Neovim quit normally
         if vim.bo[buf].buftype == '' then return end
+        if is_claude_code_buf(buf) then
+          claude_win_width_on_close = vim.api.nvim_win_get_width(win)
+          return
+        end
       end
     end
 
     vim.cmd.only({ bang = true })
   end,
   desc = 'Close all special buffers and quit Neovim',
+})
+
+vim.api.nvim_create_autocmd('WinClosed', {
+  callback = function()
+    if not claude_win_width_on_close then return end
+    local saved_width = claude_win_width_on_close
+    claude_win_width_on_close = nil
+
+    vim.schedule(function()
+      local claude_win = nil
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_is_valid(win) and is_claude_code_buf(vim.api.nvim_win_get_buf(win)) then
+          claude_win = win
+          break
+        end
+      end
+      if not claude_win then return end
+
+      vim.api.nvim_set_current_win(claude_win)
+      vim.cmd("leftabove vsplit")
+      vim.api.nvim_win_set_width(claude_win, saved_width)
+      require("snacks").dashboard.open({ win = vim.api.nvim_get_current_win() })
+    end)
+  end,
+  desc = 'Open Snacks dashboard when only Claude Code terminal remains',
 })
