@@ -26,5 +26,6 @@
     pkgu.wakatime-cli
     pkgs.opentofu
     packages.claude-code
+    pkgs.kdePackages.qtdeclarative  # qmlls QML modules (QtQuick etc.)
   ];
 }
