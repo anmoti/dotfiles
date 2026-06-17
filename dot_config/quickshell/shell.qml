@@ -6,7 +6,7 @@ Variants {
   model: Quickshell.screens
 
   delegate: Component {
-    PanelWindow {
+    PanelWindow { // qmllint disable uncreatable-type
       required property var modelData
       screen: modelData
 
