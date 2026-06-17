@@ -101,6 +101,8 @@ The original `$PATH` is preserved as `$HOST_PATH`.
 Plugin manager: lazy.nvim.
 Plugins are organized under `lua/plugins/` by category (`theme/`, `ui/`, `util/`, `lang/`, `ai/`);
 each category has both a flat loader file (e.g., `lang.lua`) and a subdirectory for per-plugin files (e.g., `lang/`).
+Prefer adding new plugins as individual files under the subdirectory (e.g., `lang/foo.lua`) rather than appending to the flat loader file.
+`common.lua` is reserved for plugins used only as dependencies by other plugins — not for standalone plugins.
 Core settings live in `lua/configs/`.
 
 Nix-installed rtp packages (treesitter parsers, etc.) are preserved via `performance.rtp.paths`,
