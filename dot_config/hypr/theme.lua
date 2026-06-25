@@ -13,11 +13,14 @@ local opacity = {
 
 ---@param active number
 ---@param inactive number?
-local function opacity_str(active, inactive)
-  if inactive then
-    return string.format("%.2f %.2f", active, inactive)
+---@param fullscreen number?
+local function opacity_str(active, inactive, fullscreen)
+  if fullscreen then
+    return string.format("%.2f override %.2f override %.2f override", active, inactive, fullscreen)
+  elseif inactive then
+    return string.format("%.2f override %.2f override", active, inactive)
   end
-  return string.format("%.2f", active)
+  return string.format("%.2f override", active)
 end
 
 local accent = c.mauve

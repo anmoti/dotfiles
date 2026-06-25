@@ -118,7 +118,7 @@ hl.window_rule({
 
 hl.window_rule({
   name = "devtools",
-  match = { title = "(Developer|開発) ?(Tools|ツール)" },
+  match = { title = ".*(Developer|開発) ?(Tools|ツール).*" },
   float = true,
   size = "monitor_w*0.5 monitor_h*0.8",
 })
@@ -198,3 +198,5 @@ hl.config({
     force_zero_scaling = true,
   },
 })
+
+require("persistent")
