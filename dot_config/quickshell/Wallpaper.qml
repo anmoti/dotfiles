@@ -5,7 +5,7 @@ import QtQuick
 Singleton {
     id: root
 
-    property var files: ["01.jpeg", "02.png", "03.jpeg"]
+    property var files: ["01.jpeg", "02.png", "03.jpeg", "04.png"]
     property int index: 0
 
     Timer {

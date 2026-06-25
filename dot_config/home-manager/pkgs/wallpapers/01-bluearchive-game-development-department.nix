@@ -10,7 +10,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     # Source:
-    # https://x.com/heart_Stab419/status/1735616603046531084 
+    # https://x.com/heart_Stab419/status/1735616603046531084
     url = "https://pbs.twimg.com/media/GBYl1uIb0AANSix.jpg?name=orig";
     hash = "sha256-XPrQtn1IpYECNCwoZOFTs9ivc78dzAoXlH0thkzYpU4=";
   };
