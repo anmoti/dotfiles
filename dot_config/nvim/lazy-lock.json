@@ -13,7 +13,7 @@
   "fidget.nvim": { "branch": "main", "commit": "82404b196e73a00b1727a91903beef5ddc319d22" },
   "flash.nvim": { "branch": "main", "commit": "fcea7ff883235d9024dc41e638f164a450c14ca2" },
   "friendly-snippets": { "branch": "main", "commit": "6cd7280adead7f586db6fccbd15d2cac7e2188b9" },
-  "fyler.nvim": { "branch": "main", "commit": "8364418d1495ce90823dca1db6ac7abba27a7972" },
+  "fyler.nvim": { "branch": "main", "commit": "d243f3127a3a54e709e61561bc042d5a6f3ff1ff" },
   "lazy.nvim": { "branch": "main", "commit": "306a05526ada86a7b30af95c5cc81ffba93fef97" },
   "lazydev.nvim": { "branch": "main", "commit": "ff2cbcba459b637ec3fd165a2be59b7bbaeedf0d" },
   "luvit-meta": { "branch": "main", "commit": "cc9b2d412d2fbd30b94a70cfc214c2a3be27a0a2" },

@@ -11,6 +11,11 @@ return {
       },
       use_as_default_explorer = true,
       kind = "floating",
+      ui = {
+        hidden_items = {
+          switches = {},
+        },
+      },
       kind_presets = {
         floating = {
           mappings = {
