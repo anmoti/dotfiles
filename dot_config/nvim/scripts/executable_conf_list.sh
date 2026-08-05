@@ -12,6 +12,7 @@ fd_options=(
             # General (Data)
   --exclude "*{[Cc]ache,[Cc]rash}*/"
   --exclude "cached*"
+  --exclude "node_modules/"
   --exclude "backups/"
   --exclude "logs/"
   --exclude "*.log"
