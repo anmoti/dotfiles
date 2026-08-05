@@ -64,6 +64,11 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'ModeChanged' }, {
 vim.api.nvim_set_hl(0, "Zenkaku", { bg = "#f9e2af", fg = "#1e1e2e" })
 
 local zenkaku_group = vim.api.nvim_create_augroup("Zenkaku", { clear = true })
+local function is_codecompanion_buf(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  return vim.bo[buf].filetype == "codecompanion"
+end
+
 vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "TermOpen" }, {
   group = zenkaku_group,
   callback = function()
@@ -74,6 +79,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "TermOpen" }, {
       end
     end
     if vim.bo.buftype == "terminal" then return end
+    if is_codecompanion_buf() then return end
     vim.fn.matchadd("Zenkaku", "[\\u3000\\uff01-\\uff5e]") -- 　！-～
   end,
 })

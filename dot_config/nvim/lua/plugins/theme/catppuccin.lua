@@ -32,6 +32,10 @@ return {
           SnacksIndent6 = { fg = colors.lavender },
           SnacksIndent7 = { fg = colors.teal },
           SnacksIndent8 = { fg = colors.blue },
+
+          -- https://github.com/mrjones2014/codecompanion-ui.nvim/blob/master/lua/codecompanion-ui/init.lua#L21
+          CcuiTitle = { fg = colors.base, bg = colors.blue },
+          CcuiMode = { fg = colors.base, bg = colors.blue },
         }
       end,
       auto_integrations = true,

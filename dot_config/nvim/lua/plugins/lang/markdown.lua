@@ -3,7 +3,7 @@
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
-    ft = "markdown",
+    ft = { "markdown" },
     opts = {
       code = {
         sign = false,

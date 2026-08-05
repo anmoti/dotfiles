@@ -1,6 +1,10 @@
 { lib, pkgs, pkgu, packages, ... }:
 
 {
+  imports = [
+    ../modules/ai.nix
+  ];
+
   programs.neovim = {
     enable = true;
     package = pkgu.neovim-unwrapped;
@@ -58,6 +62,7 @@
         pkgs.fd                             # Snacks.nvim
         pkgs.ripgrep                        # Snacks.nvim picker.grep()
         pkgs.wl-clipboard                   # clipboard provider
+        pkgs.doppler                        # codecompanion (api_key)
 
         pkgs.bash-language-server           # neovim_lsp[bashls]
         pkgs.lua-language-server            # neovim_lsp[lua_ls]
@@ -74,6 +79,8 @@
         pkgs.opentofu                       # neovim_lsp[tofu_ls] (schema, format)
         pkgs.tofu-ls                        # neovim_lsp[tofu_ls]
         pkgs.kdePackages.qtdeclarative      # neovim_lsp[qmlls]
+
+        packages.mcp-hub                    # mcphub.nvim
         packages.copilot-language-server    # copilot.lua
         packages.claude-code                # claudecode.nvim
 
