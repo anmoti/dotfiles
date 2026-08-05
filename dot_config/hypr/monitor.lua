@@ -35,7 +35,7 @@ hl.monitor({
   mode = string.format("%dx%d@165.00", legi.w, legi.h),
   position = string.format("%dx%d", legi.x, legi.y),
   scale = string.format("%.02f", legi.scale),
-  vrr = 1,
+  -- vrr = 1,
 })
 
 hl.bind("switch:on:Lid Switch", hl.dsp.dpms({ action = "off", monitor = "eDP-1" }))
@@ -46,19 +46,15 @@ local xiao = {
   scale = 1.00,
   w = 1920,
   h = 1080,
-  x = nil,
-  y = nil,
 }
-xiao.x = legi.x + (((legi.w / legi.scale) - (xiao.w / xiao.scale)) / 2)
-xiao.y = legi.y - (xiao.h / xiao.scale)
 
 hl.monitor({
   output = "desc:Xiaomi Corporation P24FBA-RAGL 5438700015282",
-  mode = string.format("%dx%d@100.00", xiao.w, xiao.h),
-  position = string.format("%dx%d", xiao.x, xiao.y),
+  mode = string.format("%dx%d@60.00", xiao.w, xiao.h),
+  position = "auto-center-up",
   scale = "1.00",
-  vrr = 1,
-  transform = transform.horizontal_reverse,
+  vrr = 0,
+  -- transform = transform.horizontal_reverse,
 })
 
 ---@type Monitor

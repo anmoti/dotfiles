@@ -95,10 +95,10 @@ do
     hl.bind(MODS(key), hl.dsp.window.move({ workspace = i }))
   end
 
-  hl.bind(MOD_ "mouse_up", hl.dsp.focus({ workspace = "m+1" }))
-  hl.bind(MOD_ "mouse_down", hl.dsp.focus({ workspace = "m-1" }))
-  hl.bind(MODS "mouse_up", hl.dsp.window.move({ workspace = "m+1" }))
-  hl.bind(MODS "mouse_down", hl.dsp.window.move({ workspace = "m-1" }))
+  hl.bind(MOD_ "mouse_up", hl.dsp.focus({ workspace = "m-1" }))
+  hl.bind(MOD_ "mouse_down", hl.dsp.focus({ workspace = "m+1" }))
+  hl.bind(MODS "mouse_up", hl.dsp.window.move({ workspace = "m-1" }))
+  hl.bind(MODS "mouse_down", hl.dsp.window.move({ workspace = "m+1" }))
 
   hl.bind(MOD_(LMB), hl.dsp.window.drag(), { mouse = true })
   hl.bind(MOD_(RMB), hl.dsp.window.resize(), { mouse = true })
@@ -107,6 +107,7 @@ do
   hl.bind(MODS "S", hl.dsp.window.move({ workspace = "special:magic" }))
 
   hl.bind(MODS "R", function()
+    hl.exec_cmd("hyprctl reload")
     hl.dispatch(hl.dsp.force_renderer_reload())
     hl.exec_cmd("killall -SIGUSR2 waybar")
   end)

@@ -93,8 +93,14 @@ hl.window_rule({
 })
 
 hl.window_rule({
+  name = "openai-prism",
+  match = { title = "(^|.* - )Prism( - .*|$)" },
+  opacity = t.opacity_str(t.opacity.media, t.opacity.dim),
+})
+
+hl.window_rule({
   name    = "app-styled-opacity",
-  match   = { class = "Alacritty|legcord|floorp" },
+  match   = { class = "Alacritty|legcord|floorp|looking-glass-client" },
   opacity = t.opacity_str(t.opacity.opaque, t.opacity.subtle),
 })
 
@@ -153,6 +159,14 @@ hl.window_rule({
   size = "700, 400",
 })
 
+
+hl.window_rule({
+  name = "speedcrunch",
+  match = { class = "org.speedcrunch.speedcrunch" },
+  float = true,
+  size = "700, 400",
+})
+
 hl.window_rule({
   name  = "alacritty-mode-float",
   match = { class = "AlacrittyFloat" },
@@ -189,6 +203,12 @@ hl.window_rule({
 hl.window_rule({
   name = "settings",
   match = { title = ".*([Ss]etting|設定).*" },
+  float = true,
+})
+
+hl.window_rule({
+  name = "wav-visualizer",
+  match = { class = "wav-visualizer" },
   float = true,
 })
 

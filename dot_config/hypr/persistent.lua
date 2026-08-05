@@ -1,5 +1,7 @@
 -- 常時起動アプリをWS11から動的に詰めてウィンドウをわりあてるルール
 local MAX_WS = 10
+local laptop = hl.get_monitor("eDP-1")
+local laptop_monitor = laptop and laptop.id or nil
 
 ---@class app : HL.WindowRuleSpec
 ---@field rules? table<number, HL.WindowRule>
@@ -12,7 +14,7 @@ local apps = {
       class = "net-jquake-app-Main",
       title = "JQuake",
     },
-    monitor = 0
+    monitor = laptop_monitor,
   },
   {
     name = "steam",
@@ -21,15 +23,27 @@ local apps = {
   {
     name = "youtube-music",
     match = { class = "com.github.th_ch.youtube_music" },
-    monitor = 0
+    monitor = laptop_monitor,
   },
   {
     name = "legcord",
     match = { class = "legcord" },
+    monitor = laptop_monitor,
   },
   {
     name = "teams-for-linux",
     match = { class = "teams-for-linux" },
+    monitor = laptop_monitor,
+  },
+  {
+    name = "slack",
+    match = { class = "slack" },
+    monitor = laptop_monitor,
+  },
+  {
+    name = "thunderbird",
+    match = { class = "org.mozilla.Thunderbird" },
+    monitor = laptop_monitor,
   },
 }
 
@@ -103,8 +117,8 @@ hl.on("window.close", function(w)
   closing[w.address] = true
   update_window_rules()
 end)
-hl.on("window.destroy", function(w)
-  closing[w.address] = nil
+hl.on("window.destroy", function()
+  closing = {}
   update_window_rules()
 end)
 hl.on("window.move_to_workspace", update_window_rules)
