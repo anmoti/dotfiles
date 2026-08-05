@@ -7,7 +7,7 @@ return {
     config = true,
     opts = {
       env = {
-        PATH = vim.env.PATH .. (vim.env.HOST_PATH and (":" .. vim.env.HOST_PATH) or ""),
+        PATH = require("utils.path").resolved,
       },
     },
     keys = {

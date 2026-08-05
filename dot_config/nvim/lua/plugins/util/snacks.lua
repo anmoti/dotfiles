@@ -166,9 +166,6 @@ return {
       {
         "<C-\\>",
         function()
-          local host_path = vim.env.HOST_PATH
-          local nvim_path = vim.env.PATH
-
           Snacks.terminal.toggle(nil, {
             win = {
               position = "right",
@@ -178,7 +175,7 @@ return {
               },
             },
             env = {
-              PATH = nvim_path .. (host_path and (":" .. host_path) or ""),
+              PATH = require("utils.path").resolved,
             },
           })
         end,
