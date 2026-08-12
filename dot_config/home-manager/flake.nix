@@ -52,6 +52,7 @@
       localPackages = {
         vscode-css-language-server = pkgs.callPackage ./pkgs/vscode-css-language-server/package.nix {};
         gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
+        proto = pkgs.callPackage ./pkgs/proto/package.nix { package = pkgu.proto; };
         wallpapers = wallpaperPkgs;
         claude-code = llm-agents.packages.${system}.claude-code;
         opencode = llm-agents.packages.${system}.opencode;
