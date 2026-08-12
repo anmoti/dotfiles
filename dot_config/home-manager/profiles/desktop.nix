@@ -7,12 +7,13 @@
   ];
 
   home.packages = [
-    pkgs.wl-clipboard   # satty
-    pkgs.brightnessctl  # change-brightness
-    pkgs.ddcutil        # change-brightness
-    pkgs.playerctl      # hyprland(bind.conf), hyprlock(songdetail)
+    pkgs.wl-clipboard               # satty
+    pkgs.brightnessctl              # change-brightness
+    pkgs.ddcutil                    # change-brightness
+    pkgs.playerctl                  # hyprland(bind.conf), hyprlock(songdetail)
 
-    pkgs.nwg-drawer     # waybar
+    pkgs.nwg-drawer                 # waybar
+    pkgs.kdePackages.qtdeclarative  # qmlls QML modules (QtQuick etc.)
   ] ++ packages.wallpapers;
 
   programs.quickshell = {

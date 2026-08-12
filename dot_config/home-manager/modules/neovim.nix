@@ -1,4 +1,4 @@
-{ lib, pkgs, pkgu, packages, ... }:
+{ lib, config, pkgs, pkgu, packages, ... }:
 
 {
   imports = [
@@ -9,8 +9,19 @@
     enable = true;
     package = pkgu.neovim-unwrapped;
     withRuby = false;
-    withPython3 = false;
+    withPython3 = true;
     sideloadInitLua = true;
+
+    extraPython3Packages = ps: with ps; [
+      jupyter-client  # molten-nvim
+      cairosvg        # molten-nvim
+      pnglatex        # molten-nvim
+      plotly          # molten-nvim
+      kaleido         # molten-nvim
+      pyperclip       # molten-nvim
+      nbformat        # molten-nvim
+      pillow          # molten-nvim
+    ];
 
     plugins = with pkgs.vimPlugins.nvim-treesitter-parsers; [
       # markup
@@ -51,7 +62,6 @@
       query
     ];
 
-    defaultEditor = true;
     extraWrapperArgs = [
       "--run" "export HOST_PATH=$PATH"
       "--set" "PATH" (lib.makeBinPath [
@@ -74,6 +84,7 @@
         pkgs.basedpyright                   # neovim_lsp[basedpyright(basedpyright-langserver)]
         pkgs.ruff                           # neovim_lsp[ruff]
         pkgs.mypy                           # nvim-lsp[mypy]
+        pkgs.rustup                         # neovim_lsp[rust_analyzer]
         pkgs.nixd                           # neovim_lsp[nixd]
         pkgs.docker-language-server         # neovim_lsp[docker-language-server]
         pkgs.opentofu                       # neovim_lsp[tofu_ls] (schema, format)
@@ -106,4 +117,9 @@
   };
 
   programs.sioyek.enable = true;
+
+  home.sessionVariables = {
+    EDITOR = "${config.programs.neovim.finalPackage}/bin/nvim";
+    VISUAL = "${config.programs.neovim.finalPackage}/bin/nvim";
+  };
 }

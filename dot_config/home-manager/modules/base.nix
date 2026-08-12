@@ -1,4 +1,4 @@
-{ pkgs, pkgu, packages, ... }:
+{ pkgs, pkgu, ... }:
 
 {
   home.username = "anmoti";
@@ -14,7 +14,7 @@
   };
 
   programs.home-manager.enable = true;
-  
+
   home.packages = [
     # CLI Deps
     pkgs.doppler  # chezmoi
@@ -25,7 +25,5 @@
     pkgs.docker-compose
     pkgu.wakatime-cli
     pkgs.opentofu
-    packages.claude-code
-    pkgs.kdePackages.qtdeclarative  # qmlls QML modules (QtQuick etc.)
   ];
 }

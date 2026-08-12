@@ -32,10 +32,27 @@
     };
     initContent = ''
       eval "$(proto activate zsh)"
+
+      launch() {
+        ${pkgs.python3}/bin/python -c '
+import subprocess
+import sys
+
+subprocess.Popen(
+    sys.argv[1:],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+)
+' "$@"
+      }
     '';
   };
 
   programs.zoxide.enable = true;
+
+  programs.direnv.enable = true;
 
   programs.oh-my-posh = {
     enable = true;
