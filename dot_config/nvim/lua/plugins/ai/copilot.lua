@@ -15,11 +15,31 @@ return {
       },
       ---@diagnostic disable-next-line: missing-fields
       suggestion = {
-        enabled = false,
+        enabled = true,
+        auto_trigger = false,
       },
       server = {
         type = "binary",
         custom_server_filepath = "copilot-language-server",
+      },
+    },
+  },
+  {
+    "saghen/blink.cmp",
+    dependencies = {
+      "fang2hou/blink-copilot",
+    },
+    ---@module "blink.cmp"
+    ---@type blink.cmp.Config
+    opts = {
+      sources = {
+        providers = {
+          copilot = {
+            name = "copilot",
+            module = "blink-copilot",
+            async = true,
+          },
+        },
       },
     },
   },
