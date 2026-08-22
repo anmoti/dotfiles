@@ -91,6 +91,8 @@
         pkgs.tofu-ls                        # neovim_lsp[tofu_ls]
         pkgs.kdePackages.qtdeclarative      # neovim_lsp[qmlls]
 
+        packages.proto
+
         packages.mcp-hub                    # mcphub.nvim
         packages.copilot-language-server    # copilot.lua
         packages.claude-code                # claudecode.nvim
@@ -113,6 +115,12 @@
         pkgu.chezmoi                        # chezmoi.nvim
         pkgu.wakatime-cli                   # vim-wakatime
       ])
+      "--run"
+      ''
+      if [ -z "$NIX_BUILD_TOP" ]; then
+        eval "$(proto activate --export)"
+      fi
+    ''
     ];
   };
 

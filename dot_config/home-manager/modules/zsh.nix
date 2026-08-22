@@ -1,7 +1,8 @@
-{ config, pkgs, packages, ... }:
+{ config, lib, pkgs, packages, ... }:
 
 {
   home.packages = [
+    pkgs.zsh-completions
     packages.proto
   ];
 
@@ -30,24 +31,29 @@
         "git"
       ];
     };
-    initContent = ''
-      eval "$(proto activate zsh)"
+    initContent = lib.mkMerge [
+      (lib.mkOrder 550 ''
+        fpath=(~/.config/zsh/completions $fpath)
+      '')
+      (lib.mkOrder 1000 ''
+        eval "$(proto activate zsh)"
 
-      launch() {
-        ${pkgs.python3}/bin/python -c '
+        launch() {
+          ${pkgs.python3}/bin/python -c '
 import subprocess
 import sys
 
 subprocess.Popen(
-    sys.argv[1:],
-    stdin=subprocess.DEVNULL,
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL,
-    start_new_session=True,
+  sys.argv[1:],
+  stdin=subprocess.DEVNULL,
+  stdout=subprocess.DEVNULL,
+  stderr=subprocess.DEVNULL,
+  start_new_session=True,
 )
-' "$@"
-      }
-    '';
+          ' "$@"
+        }
+      '')
+    ];
   };
 
   programs.zoxide.enable = true;
