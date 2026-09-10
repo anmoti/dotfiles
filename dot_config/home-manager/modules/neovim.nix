@@ -23,44 +23,7 @@
       pillow          # molten-nvim
     ];
 
-    plugins = with pkgs.vimPlugins.nvim-treesitter-parsers; [
-      # markup
-      markdown
-      markdown_inline
-      html
-      latex
-      xml
-      # code
-      c
-      cpp
-      go
-      c_sharp
-      python
-      php
-      javascript
-      typescript
-      tsx
-      svelte
-      astro
-      css
-      # scripting
-      bash
-      lua
-      nix
-      dockerfile
-      # config
-      ini
-      json
-      json5
-      toml
-      yaml
-      hcl
-      # neovim internals
-      vim
-      vimdoc
-      regex
-      query
-    ];
+    plugins = [ pkgs.vimPlugins.nvim-treesitter.withAllGrammars ];
 
     extraWrapperArgs = [
       "--run" "export HOST_PATH=$PATH"
@@ -74,22 +37,27 @@
         pkgs.wl-clipboard                   # clipboard provider
         pkgs.doppler                        # codecompanion (api_key)
 
-        pkgs.bash-language-server           # neovim_lsp[bashls]
-        pkgs.lua-language-server            # neovim_lsp[lua_ls]
-        pkgs.yaml-language-server           # neovim_lsp[yamlls]
-        pkgs.taplo                          # neovim_lsp[taplo]
-        packages.gtk-css-language-server    # neovim_lsp[gtkcssls]
-        packages.vscode-css-language-server # neovim_lsp[cssls]
-        pkgs.vscode-langservers-extracted   # neovim_lsp[cssls, eslint, html, jsonls]
-        pkgs.basedpyright                   # neovim_lsp[basedpyright(basedpyright-langserver)]
-        pkgs.ruff                           # neovim_lsp[ruff]
-        pkgs.mypy                           # nvim-lsp[mypy]
-        pkgs.rustup                         # neovim_lsp[rust_analyzer]
-        pkgs.nixd                           # neovim_lsp[nixd]
-        pkgs.docker-language-server         # neovim_lsp[docker-language-server]
-        pkgs.opentofu                       # neovim_lsp[tofu_ls] (schema, format)
-        pkgs.tofu-ls                        # neovim_lsp[tofu_ls]
-        pkgs.kdePackages.qtdeclarative      # neovim_lsp[qmlls]
+        pkgs.bash-language-server           # lspconfig[bashls]
+        pkgs.lua-language-server            # lspconfig[lua_ls]
+        pkgs.stylua                         # conform[lua]
+        pkgs.yaml-language-server           # lspconfig[yamlls]
+        pkgs.taplo                          # lspconfig[taplo]
+        packages.gtk-css-language-server    # lspconfig[gtkcssls]
+        packages.vscode-css-language-server # lspconfig[cssls]
+        pkgs.vscode-langservers-extracted   # lspconfig[cssls, eslint, html, jsonls]
+        pkgs.basedpyright                   # lspconfig[basedpyright(basedpyright-langserver)]
+        pkgs.ruff                           # lspconfig[ruff]
+        # pkgs.mypy                           # nvim-lint[mypy]
+        pkgs.typescript-go                  # lspconfig[tsc]
+        pkgs.svelte-language-server         # lspconfig[svelte]
+        pkgu.astro-language-server          # lspconfig[astro]
+        pkgs.gopls                          # lspconfig[gopls]
+        pkgs.rustup                         # lspconfig[rust_analyzer]
+        pkgs.nixd                           # lspconfig[nixd]
+        pkgs.docker-language-server         # lspconfig[docker-language-server]
+        pkgs.opentofu                       # lspconfig[tofu_ls] (schema, format)
+        pkgs.tofu-ls                        # lspconfig[tofu_ls]
+        pkgs.kdePackages.qtdeclarative      # lspconfig[qmlls]
 
         packages.proto
 
