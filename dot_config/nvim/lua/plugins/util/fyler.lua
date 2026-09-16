@@ -16,6 +16,9 @@ return {
           switches = {},
         },
       },
+      extensions = {
+        git = { enabled = true },
+      },
       kind_presets = {
         floating = {
           mappings = {
