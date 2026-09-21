@@ -1,0 +1,117 @@
+diff --git a/lua/fyler/extensions/git.lua b/lua/fyler/extensions/git.lua
+index 14f89ce..78f770a 100644
+--- a/lua/fyler/extensions/git.lua
++++ b/lua/fyler/extensions/git.lua
+@@ -21,6 +21,8 @@ local default_icons = {
+   [' M'] = { icon = '*', hl = 'FylerGitModified' },
+   ['M '] = { icon = '+', hl = 'FylerGitStaged' },
+   ['MM'] = { icon = '+', hl = 'FylerGitStaged' },
++  ['A '] = { icon = '+', hl = 'FylerGitStaged' },
++  ['AM'] = { icon = '+', hl = 'FylerGitStaged' },
+   ['??'] = { icon = '?', hl = 'FylerGitUntracked' },
+   [' D'] = { icon = '-', hl = 'FylerGitDeleted' },
+   ['D '] = { icon = '-', hl = 'FylerGitStaged' },
+@@ -90,17 +92,36 @@ function H.store_known_roots()
+ end
+ 
+ function H.propagate_to_parents(statuses)
+-  for path, xy in pairs(statuses) do
++  -- Snapshot the keys before mutating: `statuses[dir] = xy` below adds new
++  -- keys to this same table, and adding keys while `pairs`-iterating it is
++  -- undefined behavior in Lua. On deep trees this silently dropped some
++  -- parent directories' propagated status.
++  local paths = {}
++  for path in pairs(statuses) do
++    paths[#paths + 1] = path
++  end
++
++  -- dir -> set of every distinct status code found among its descendants,
++  -- so a folder containing both staged and untracked files can show both
++  -- icons instead of only the highest-priority one.
++  local dir_codes = {}
++
++  for _, path in ipairs(paths) do
++    local xy = statuses[path]
+     local xy_prio = propagate_priority[xy] or 0
+     local dir = libpath.to_dirname(path)
+     while #dir > 0 do
+       local existing = statuses[dir]
+       if not existing or xy_prio > (propagate_priority[existing] or 0) then statuses[dir] = xy end
++      dir_codes[dir] = dir_codes[dir] or {}
++      dir_codes[dir][xy] = true
+       local parent = libpath.to_dirname(dir)
+       if parent == dir then break end
+       dir = parent
+     end
+   end
++
++  return dir_codes
+ end
+ 
+ function H.statuses_async(entries, force, cb)
+@@ -201,9 +222,32 @@ extensions.register({
+       local current_count = refresh_count
+ 
+       local gc = H.git_col(lines)
+-      local function apply(i, item, stat)
++      local function apply(i, item, stat, codes)
+         local icon, hl = H.get_icon(stat, cfg.icons)
+         if not hl then return end
++
++        -- Directories may aggregate several distinct status codes among
++        -- their descendants (e.g. staged `+` and untracked `?`); show one
++        -- icon per distinct code instead of collapsing to a single one.
++        local segments = { { icon, hl } }
++        if codes then
++          local ordered = {}
++          for xy in pairs(codes) do
++            ordered[#ordered + 1] = xy
++          end
++          table.sort(ordered, function(a, b) return (propagate_priority[a] or 0) > (propagate_priority[b] or 0) end)
++
++          local seen, list = {}, {}
++          for _, xy in ipairs(ordered) do
++            local ic, h = H.get_icon(xy, cfg.icons)
++            if ic and h and not seen[ic] then
++              seen[ic] = true
++              list[#list + 1] = { ic, h }
++            end
++          end
++          if #list > 0 then segments = list end
++        end
++
+         if icon then
+           if cfg.inline then
+             pcall(
+@@ -212,7 +256,7 @@ extensions.register({
+               hl_ns,
+               i - 1,
+               item._name_col + #item.name,
+-              { virt_text = { { icon, hl } }, hl_mode = 'combine' }
++              { virt_text = segments, hl_mode = 'combine' }
+             )
+           else
+             pcall(
+@@ -221,7 +265,7 @@ extensions.register({
+               hl_ns,
+               i - 1,
+               0,
+-              { virt_text = { { icon, hl } }, virt_text_win_col = gc, hl_mode = 'combine' }
++              { virt_text = segments, virt_text_win_col = gc, hl_mode = 'combine' }
+             )
+           end
+         end
+@@ -236,11 +280,11 @@ extensions.register({
+       end
+       H.statuses_async(visible, args and args.force, function(statuses)
+         if current_count == refresh_count then
+-          H.propagate_to_parents(statuses)
++          local dir_codes = H.propagate_to_parents(statuses)
+           H.store_known_roots()
+           for i, item in ipairs(visible) do
+             local stat = statuses[item.path]
+-            if stat then apply(i, item, stat) end
++            if stat then apply(i, item, stat, item.type == 'directory' and dir_codes[item.path]) end
+           end
+         end
+       end)

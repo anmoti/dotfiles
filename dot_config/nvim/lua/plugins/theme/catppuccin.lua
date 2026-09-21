@@ -39,16 +39,17 @@ return {
 
           -- gitsigns.nvim: catppuccin's default GitSignsAdd (green) was hard to tell
           -- apart from GitSignsChange (yellow) in the thin signcolumn glyph, so Add
-          -- moved to teal to match FylerGitStaged/Untracked below. Change stays yellow.
+          -- moved to teal to match FylerGitUntracked below. Change stays yellow.
           GitSignsAdd = { fg = colors.teal },
           GitSignsAddPreview = { fg = colors.teal },
           GitSignsAddInline = { fg = colors.base, bg = colors.teal, style = { "bold" } },
 
           -- fyler.nvim git extension (no official catppuccin integration; follows
           -- the file-status convention from catppuccin's own diffview.nvim integration).
-          -- blue is reserved for FylerDirectoryName/Icon.
+          -- blue is reserved for FylerDirectoryName/Icon. Staged vs. unstaged must be
+          -- visually distinct, so staged (index) is green and unstaged modified is yellow.
           FylerGitModified = { fg = colors.yellow },
-          FylerGitStaged = { fg = colors.teal },
+          FylerGitStaged = { fg = colors.green },
           FylerGitUntracked = { fg = colors.teal },
           FylerGitDeleted = { fg = colors.red },
           FylerGitRenamed = { fg = colors.yellow },
