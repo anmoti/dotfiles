@@ -14,8 +14,6 @@ return {
           LineNr = { fg = colors.overlay1 },
           CursorLineNr = { fg = colors.peach },
 
-          Whitespace = { bg = colors.red },
-
           LspInlayHint = {
             fg = colors.overlay1,
             bg = colors.surface0,

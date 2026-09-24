@@ -16,7 +16,15 @@ vim.opt.softtabstop = 2
 vim.opt.fixendofline = true
 
 vim.opt.list = true
-vim.opt.listchars = { tab = ">.", trail = " " }
+vim.opt.listchars = { tab = "» ", nbsp = "␣" }
+
+-- Goは実タブでインデントするので、tabマーカーは表示しない
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "go",
+  callback = function()
+    vim.opt_local.listchars:append({ tab = "  " })
+  end,
+})
 
 vim.g.python_indent = {
   closed_paren_align_last_line = false,
