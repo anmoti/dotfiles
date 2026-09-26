@@ -10,6 +10,7 @@
     package = pkgu.neovim-unwrapped;
     withRuby = false;
     withPython3 = true;
+    waylandSupport = true;
     sideloadInitLua = true;
 
     extraPython3Packages = ps: with ps; [
@@ -34,7 +35,6 @@
         pkgs.git
         pkgs.fd                             # Snacks.nvim
         pkgs.ripgrep                        # Snacks.nvim picker.grep()
-        pkgs.wl-clipboard                   # clipboard provider
         pkgs.doppler                        # codecompanion (api_key)
 
         pkgs.bash-language-server           # lspconfig[bashls]
