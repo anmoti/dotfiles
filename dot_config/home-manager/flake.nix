@@ -73,5 +73,11 @@
         extraSpecialArgs = { inherit pkgu mcp-servers; packages = localPackages; };
         modules = [ ./home.nix ./profiles/desktop.nix ];
       };
+
+      homeConfigurations."anmoti@thinkpad-1" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = { inherit pkgu mcp-servers; packages = localPackages; };
+        modules = [ ./home.nix ./profiles/desktop.nix ];
+      };
     };
 }
