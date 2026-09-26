@@ -51,6 +51,7 @@
         pkgs.typescript-go                  # lspconfig[tsc]
         pkgs.svelte-language-server         # lspconfig[svelte]
         pkgu.astro-language-server          # lspconfig[astro]
+        pkgs.tailwindcss-language-server    # lspconfig[tailwindcss]
         pkgs.gopls                          # lspconfig[gopls]
         pkgs.rustup                         # lspconfig[rust_analyzer]
         pkgs.nixd                           # lspconfig[nixd]

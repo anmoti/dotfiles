@@ -27,8 +27,6 @@ return {
             },
           },
         },
-        svelte = {},
-        astro = {},
       },
     },
   }

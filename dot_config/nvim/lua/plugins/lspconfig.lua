@@ -13,6 +13,7 @@ local common = require("utils.common")
 ---@field tsc? LspConfigServer.tsc
 ---@field astro? LspConfigServer.astro
 ---@field svelte? LspConfigServer.svelte
+---@field tailwindcss? LspConfigServer.tailwindcss
 ---@field buf_ls? LspConfigServer.buf_ls
 
 
@@ -48,6 +49,10 @@ local default_server = {
 ---@class LspConfigServer.svelte: LspConfigServer
 ---@field settings? lspconfig.settings.svelte
 ---@field setup? fun(server: LspConfigServer.svelte)
+
+---@class LspConfigServer.tailwindcss: LspConfigServer
+---@field settings? lspconfig.settings.tailwindcss
+---@field setup? fun(server: LspConfigServer.tailwindcss)
 
 ---@class LspConfigServer.buf_ls: LspConfigServer
 ---@field setup? fun(server: LspConfigServer.buf_ls)
