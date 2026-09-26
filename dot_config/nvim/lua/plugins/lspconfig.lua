@@ -13,6 +13,7 @@ local common = require("utils.common")
 ---@field tsc? LspConfigServer.tsc
 ---@field astro? LspConfigServer.astro
 ---@field svelte? LspConfigServer.svelte
+---@field buf_ls? LspConfigServer.buf_ls
 
 
 ---@class LspConfigServer: vim.lsp.Config
@@ -47,6 +48,10 @@ local default_server = {
 ---@class LspConfigServer.svelte: LspConfigServer
 ---@field settings? lspconfig.settings.svelte
 ---@field setup? fun(server: LspConfigServer.svelte)
+
+---@class LspConfigServer.buf_ls: LspConfigServer
+---@field setup? fun(server: LspConfigServer.buf_ls)
+
 
 ---@param lsp_name string
 ---@param server LspConfigServer

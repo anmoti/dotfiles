@@ -58,6 +58,7 @@
         pkgs.opentofu                       # lspconfig[tofu_ls] (schema, format)
         pkgs.tofu-ls                        # lspconfig[tofu_ls]
         pkgs.kdePackages.qtdeclarative      # lspconfig[qmlls]
+        pkgs.buf                           # lspconfig[buf_ls]
 
         packages.proto
 
