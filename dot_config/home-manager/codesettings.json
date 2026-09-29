@@ -1,0 +1,12 @@
+{
+  "nixd": {
+    "nixpkgs": {
+      "expr": "(builtins.getFlake \"path:${workspaceFolder}\").inputs.nixpkgs.legacyPackages.x86_64-linux"
+    },
+    "options": {
+      "home_manager": {
+        "expr": "(builtins.getFlake \"path:${workspaceFolder}\").homeConfigurations.lsp.options"
+      }
+    }
+  }
+}

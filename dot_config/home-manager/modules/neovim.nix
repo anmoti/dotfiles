@@ -1,4 +1,9 @@
-{ lib, config, pkgs, pkgu, packages, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -7,90 +12,97 @@
 
   programs.neovim = {
     enable = true;
-    package = pkgu.neovim-unwrapped;
+    package = pkgs.unstable.neovim-unwrapped;
     withRuby = false;
     withPython3 = true;
     waylandSupport = true;
     sideloadInitLua = true;
 
-    extraPython3Packages = ps: with ps; [
-      jupyter-client  # molten-nvim
-      cairosvg        # molten-nvim
-      pnglatex        # molten-nvim
-      plotly          # molten-nvim
-      kaleido         # molten-nvim
-      pyperclip       # molten-nvim
-      nbformat        # molten-nvim
-      pillow          # molten-nvim
-    ];
+    extraPython3Packages =
+      ps: with ps; [
+        jupyter-client # molten-nvim
+        cairosvg # molten-nvim
+        pnglatex # molten-nvim
+        plotly # molten-nvim
+        kaleido # molten-nvim
+        pyperclip # molten-nvim
+        nbformat # molten-nvim
+        pillow # molten-nvim
+      ];
 
     plugins = [ pkgs.vimPlugins.nvim-treesitter.withAllGrammars ];
 
     extraWrapperArgs = [
-      "--run" "export HOST_PATH=$PATH"
-      "--set" "PATH" (lib.makeBinPath [
-        pkgs.bash
-        pkgs.coreutils                      # sha256sum (blink.cmp), tee (:SudoWrite)
-        pkgs.curl
-        pkgs.git
-        pkgs.fd                             # Snacks.nvim
-        pkgs.ripgrep                        # Snacks.nvim picker.grep()
-        pkgs.doppler                        # codecompanion (api_key)
+      "--run"
+      "export HOST_PATH=$PATH"
+      "--set"
+      "PATH"
+      (lib.makeBinPath (
+        with pkgs;
+        [
+          bash
+          coreutils # sha256sum (blink.cmp), tee (:SudoWrite)
+          curl
+          git
+          fd # Snacks.nvim
+          ripgrep # Snacks.nvim picker.grep()
+          doppler # codecompanion (api_key)
 
-        pkgs.bash-language-server           # lspconfig[bashls]
-        pkgs.lua-language-server            # lspconfig[lua_ls]
-        pkgs.stylua                         # conform[lua]
-        pkgs.yaml-language-server           # lspconfig[yamlls]
-        pkgs.taplo                          # lspconfig[taplo]
-        packages.gtk-css-language-server    # lspconfig[gtkcssls]
-        packages.vscode-css-language-server # lspconfig[cssls]
-        pkgs.vscode-langservers-extracted   # lspconfig[cssls, eslint, html, jsonls]
-        pkgs.basedpyright                   # lspconfig[basedpyright(basedpyright-langserver)]
-        pkgs.ruff                           # lspconfig[ruff]
-        # pkgs.mypy                           # nvim-lint[mypy]
-        pkgs.typescript-go                  # lspconfig[tsc]
-        pkgs.svelte-language-server         # lspconfig[svelte]
-        pkgu.astro-language-server          # lspconfig[astro]
-        pkgs.tailwindcss-language-server    # lspconfig[tailwindcss]
-        pkgs.gopls                          # lspconfig[gopls]
-        pkgs.rustup                         # lspconfig[rust_analyzer]
-        pkgs.nixd                           # lspconfig[nixd]
-        pkgs.docker-language-server         # lspconfig[docker-language-server]
-        pkgs.opentofu                       # lspconfig[tofu_ls] (schema, format)
-        pkgs.tofu-ls                        # lspconfig[tofu_ls]
-        pkgs.kdePackages.qtdeclarative      # lspconfig[qmlls]
-        pkgs.buf                           # lspconfig[buf_ls]
+          bash-language-server # lspconfig[bashls]
+          lua-language-server # lspconfig[lua_ls]
+          stylua # conform[lua]
+          yaml-language-server # lspconfig[yamlls]
+          taplo # lspconfig[taplo]
+          local.gtk-css-language-server # lspconfig[gtkcssls]
+          local.vscode-css-language-server # lspconfig[cssls]
+          vscode-langservers-extracted # lspconfig[cssls, eslint, html, jsonls]
+          basedpyright # lspconfig[basedpyright(basedpyright-langserver)]
+          ruff # lspconfig[ruff]
+          # mypy                               # nvim-lint[mypy]
+          typescript-go # lspconfig[tsc]
+          svelte-language-server # lspconfig[svelte]
+          unstable.astro-language-server # lspconfig[astro]
+          tailwindcss-language-server # lspconfig[tailwindcss]
+          gopls # lspconfig[gopls]
+          rustup # lspconfig[rust_analyzer]
+          nixd # lspconfig[nixd]
+          docker-language-server # lspconfig[docker-language-server]
+          opentofu # lspconfig[tofu_ls] (schema, format)
+          tofu-ls # lspconfig[tofu_ls]
+          kdePackages.qtdeclarative # lspconfig[qmlls]
+          buf # lspconfig[buf_ls]
 
-        packages.proto
+          local.proto
 
-        packages.mcp-hub                    # mcphub.nvim
-        packages.copilot-language-server    # copilot.lua
-        packages.claude-code                # claudecode.nvim
+          mcp-hub.mcp-hub # mcphub.nvim
+          llm-agents.copilot-language-server # copilot.lua
+          llm-agents.claude-code # claudecode.nvim
 
-        pkgs.sioyek                         # VimTeX
-        (pkgs.texlive.combine {
-          inherit (pkgs.texlive)
-            scheme-small
-            collection-latexextra
-            collection-fontsrecommended
-            collection-langjapanese
-            tikz-cd
-            circuitikz
-            siunitx
-            biber
-            latexmk
-            ;
-         })
+          sioyek # VimTeX
+          (texlive.combine {
+            inherit (texlive)
+              scheme-small
+              collection-latexextra
+              collection-fontsrecommended
+              collection-langjapanese
+              tikz-cd
+              circuitikz
+              siunitx
+              biber
+              latexmk
+              ;
+          })
 
-        pkgu.chezmoi                        # chezmoi.nvim
-        pkgu.wakatime-cli                   # vim-wakatime
-      ])
+          unstable.chezmoi # chezmoi.nvim
+          unstable.wakatime-cli # vim-wakatime
+        ]
+      ))
       "--run"
       ''
-      if [ -z "$NIX_BUILD_TOP" ]; then
-        eval "$(proto activate --export)"
-      fi
-    ''
+        if [ -z "$NIX_BUILD_TOP" ]; then
+          eval "$(proto activate --export)"
+        fi
+      ''
     ];
   };
 

@@ -1,4 +1,4 @@
-{ pkgs, pkgu, ... }:
+{ pkgs, ... }:
 
 {
   home.username = "anmoti";
@@ -15,15 +15,15 @@
 
   programs.home-manager.enable = true;
 
-  home.packages = [
+  home.packages = with pkgs; [
     # CLI Deps
-    pkgs.doppler  # chezmoi
-    pkgs.gh       # dot_gitconfig
+    doppler # chezmoi
+    gh # dot_gitconfig
 
     # CLI Apps
-    pkgu.chezmoi
-    pkgs.docker-compose
-    pkgu.wakatime-cli
-    pkgs.opentofu
+    unstable.chezmoi
+    docker-compose
+    unstable.wakatime-cli
+    opentofu
   ];
 }

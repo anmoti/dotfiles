@@ -1,4 +1,8 @@
-{ stdenv, fetchurl, imagemagick }:
+{
+  stdenv,
+  fetchurl,
+  imagemagick,
+}:
 
 let
   id = "02";
@@ -10,7 +14,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     # Source:
-    # https://x.com/_tatsuyaendo_/status/1512801651459239937 
+    # https://x.com/_tatsuyaendo_/status/1512801651459239937
     url = "https://pbs.twimg.com/media/FP6NDzNacAYeLhr.jpg?name=orig";
     hash = "sha256-DgUyC7ecmNC2aETZjnio6Z6D4QNB/CERwY3OdzTKeJo=";
   };
@@ -73,4 +77,3 @@ stdenv.mkDerivation rec {
     filename = "${id}.${ext}";
   };
 }
-

@@ -1,4 +1,4 @@
-{ packages, mcp-servers, ... }:
+{ pkgs, mcp-servers, ... }:
 
 {
   imports = [ mcp-servers.homeManagerModules.default ];
@@ -15,13 +15,13 @@
 
   programs.claude-code = {
     enable = true;
-    package = packages.claude-code;
+    package = pkgs.llm-agents.claude-code;
     enableMcpIntegration = true;
   };
 
   programs.opencode = {
     enable = true;
-    package = packages.opencode;
+    package = pkgs.llm-agents.opencode;
     enableMcpIntegration = true;
   };
 }

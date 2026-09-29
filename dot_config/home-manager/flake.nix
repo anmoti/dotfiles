@@ -20,64 +20,95 @@
     mcp-hub.url = "github:ravitemer/mcp-hub";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, home-manager, llm-agents, mcp-servers, mcp-hub, ... }:
+  outputs =
+    {
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      llm-agents,
+      mcp-servers,
+      mcp-hub,
+      ...
+    }:
     let
       system = "x86_64-linux";
 
       pkgs = import nixpkgs {
         inherit system;
         config = {
-          allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-            "claude-code"
-          ];
+          allowUnfreePredicate =
+            pkg:
+            builtins.elem (nixpkgs.lib.getName pkg) [
+              "claude-code"
+            ];
         };
-      };
-      pkgu = import nixpkgs-unstable {
-        inherit system;
-      };
-
-      wallpaperPkgs =
-        let
-          wallpaperDir = ./pkgs/wallpapers;
-          files = builtins.readDir wallpaperDir;
-        in
-        pkgs.lib.pipe files [
-          (pkgs.lib.filterAttrs (name: type:
-            type == "regular" && pkgs.lib.hasSuffix ".nix" name
-          ))
-          builtins.attrNames
-          (map (name: pkgs.callPackage (wallpaperDir + "/${name}") {}))
+        overlays = [
+          (final: prev: {
+            unstable = import nixpkgs-unstable {
+              inherit system;
+              config = prev.config;
+            };
+            llm-agents = llm-agents.packages.${system};
+            mcp-hub = mcp-hub.packages.${system};
+            local = {
+              vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
+              gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
+              proto = prev.callPackage ./pkgs/proto/package.nix { package = final.unstable.proto; };
+              wallpapers =
+                let
+                  wallpaperDir = ./pkgs/wallpapers;
+                  files = builtins.readDir wallpaperDir;
+                in
+                prev.lib.pipe files [
+                  (prev.lib.filterAttrs (name: type: type == "regular" && prev.lib.hasSuffix ".nix" name))
+                  builtins.attrNames
+                  (map (name: prev.callPackage (wallpaperDir + "/${name}") { }))
+                ];
+            };
+          })
         ];
-
-      localPackages = {
-        vscode-css-language-server = pkgs.callPackage ./pkgs/vscode-css-language-server/package.nix {};
-        gtk-css-language-server = pkgs.callPackage ./pkgs/gtk-css-language-server/package.nix {};
-        proto = pkgs.callPackage ./pkgs/proto/package.nix { package = pkgu.proto; };
-        wallpapers = wallpaperPkgs;
-        claude-code = llm-agents.packages.${system}.claude-code;
-        opencode = llm-agents.packages.${system}.opencode;
-        copilot-language-server = llm-agents.packages.${system}.copilot-language-server;
-        mcp-hub = mcp-hub.packages.${pkgs.system}.mcp-hub;
       };
-    in {
-      packages.${system} = pkgs.lib.filterAttrs (_: pkgs.lib.isDerivation) localPackages;
+
+      findNixFiles =
+        dir:
+        pkgs.lib.pipe (builtins.readDir dir) [
+          (pkgs.lib.filterAttrs (name: type: type == "regular" && pkgs.lib.hasSuffix ".nix" name))
+          (pkgs.lib.mapAttrsToList (name: _: dir + "/${name}"))
+        ];
+    in
+    {
+      formatter.${system} = pkgs.nixfmt-tree;
+
+      packages.${system} = pkgs.lib.filterAttrs (_: pkgs.lib.isDerivation) pkgs.local;
+
+      homeConfigurations.lsp = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = { inherit mcp-servers; };
+        modules = [ ./home.nix ] ++ (findNixFiles ./profiles);
+      };
 
       homeConfigurations."anmoti" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit pkgu mcp-servers; packages = localPackages; };
+        extraSpecialArgs = { inherit mcp-servers; };
         modules = [ ./home.nix ];
       };
 
       homeConfigurations."anmoti@LEGION5" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit pkgu mcp-servers; packages = localPackages; };
-        modules = [ ./home.nix ./profiles/desktop.nix ];
+        extraSpecialArgs = { inherit mcp-servers; };
+        modules = [
+          ./home.nix
+          ./profiles/desktop.nix
+        ];
       };
 
       homeConfigurations."anmoti@thinkpad-1" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit pkgu mcp-servers; packages = localPackages; };
-        modules = [ ./home.nix ./profiles/desktop.nix ];
+        extraSpecialArgs = { inherit mcp-servers; };
+        modules = [
+          ./home.nix
+          ./profiles/desktop.nix
+        ];
       };
     };
 }

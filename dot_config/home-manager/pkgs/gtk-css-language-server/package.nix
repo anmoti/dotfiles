@@ -10,7 +10,7 @@
   jsonrpc-glib,
   gtk4,
   git,
-  lib
+  lib,
 }:
 
 stdenv.mkDerivation {
@@ -42,11 +42,13 @@ stdenv.mkDerivation {
     ln -s $out/bin/gtkcsslanguageserver $out/bin/gtk-css-language-server
   '';
 
-  meta = with lib; {
+  meta = {
     description = "Language server for GTK CSS";
     homepage = "https://github.com/JCWasmx86/GTKCssLanguageServer";
-    license = licenses.gpl3;
-    platforms = platforms.linux;
+    license = with lib.licenses; [
+      gpl3
+    ];
+    platforms = lib.platforms.linux;
     mainProgram = "gtk-css-language-server";
   };
 }

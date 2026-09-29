@@ -1,9 +1,14 @@
-{ config, lib, pkgs, packages, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   home.packages = [
     pkgs.zsh-completions
-    packages.proto
+    pkgs.local.proto
   ];
 
   systemd.user.sessionVariables = {
@@ -17,7 +22,7 @@
   };
 
   home.sessionPath = [
-  "${config.xdg.dataHome}/cargo/bin"
+    "${config.xdg.dataHome}/cargo/bin"
   ];
 
   programs.zsh = {
@@ -36,22 +41,22 @@
         fpath=(~/.config/zsh/completions $fpath)
       '')
       (lib.mkOrder 1000 ''
-        eval "$(proto activate zsh)"
+                eval "$(proto activate zsh)"
 
-        launch() {
-          ${pkgs.python3}/bin/python -c '
-import subprocess
-import sys
+                launch() {
+                  ${pkgs.python3}/bin/python -c '
+        import subprocess
+        import sys
 
-subprocess.Popen(
-  sys.argv[1:],
-  stdin=subprocess.DEVNULL,
-  stdout=subprocess.DEVNULL,
-  stderr=subprocess.DEVNULL,
-  start_new_session=True,
-)
-          ' "$@"
-        }
+        subprocess.Popen(
+          sys.argv[1:],
+          stdin=subprocess.DEVNULL,
+          stdout=subprocess.DEVNULL,
+          stderr=subprocess.DEVNULL,
+          start_new_session=True,
+        )
+                  ' "$@"
+                }
       '')
     ];
   };

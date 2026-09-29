@@ -1,4 +1,4 @@
-{ pkgs, packages, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -6,15 +6,17 @@
     ../modules/fonts.nix
   ];
 
-  home.packages = [
-    pkgs.wl-clipboard               # satty
-    pkgs.brightnessctl              # change-brightness
-    pkgs.ddcutil                    # change-brightness
-    pkgs.playerctl                  # hyprland(bind.conf), hyprlock(songdetail)
+  home.packages =
+    (with pkgs; [
+      wl-clipboard # satty
+      brightnessctl # change-brightness
+      ddcutil # change-brightness
+      playerctl # hyprland(bind.conf), hyprlock(songdetail)
 
-    pkgs.nwg-drawer                 # waybar
-    pkgs.kdePackages.qtdeclarative  # qmlls QML modules (QtQuick etc.)
-  ] ++ packages.wallpapers;
+      nwg-drawer # waybar
+      kdePackages.qtdeclarative # qmlls QML modules (QtQuick etc.)
+    ])
+    ++ pkgs.local.wallpapers;
 
   programs.quickshell = {
     enable = true;

@@ -26,4 +26,3 @@ stdenv.mkDerivation {
     filename = "${id}.${ext}";
   };
 }
-
