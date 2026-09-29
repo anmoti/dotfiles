@@ -18,6 +18,15 @@
     ])
     ++ pkgs.local.wallpapers;
 
+  home.pointerCursor = {
+    enable = true;
+    package = pkgs.catppuccin-cursors.mochaSapphire;
+    name = "catppuccin-mocha-sapphire-cursors";
+    size = 24;
+    gtk.enable = true;
+    hyprcursor.enable = true;
+  };
+
   programs.quickshell = {
     enable = true;
     systemd = {
