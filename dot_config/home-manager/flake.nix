@@ -59,6 +59,7 @@
             local = {
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
+              catppuccin-openbox = prev.callPackage ./pkgs/catppuccin-openbox/package.nix { };
               proto = prev.callPackage ./pkgs/proto/package.nix { package = final.unstable.proto; };
               wallpapers =
                 let

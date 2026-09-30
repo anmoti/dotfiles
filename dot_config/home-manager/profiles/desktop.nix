@@ -16,6 +16,7 @@
       nwg-drawer # waybar
       kdePackages.qtdeclarative # qmlls QML modules (QtQuick etc.)
     ])
+    ++ [ pkgs.local.catppuccin-openbox ]
     ++ pkgs.local.wallpapers;
 
   home.pointerCursor = {
