@@ -60,6 +60,10 @@
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
               catppuccin-openbox = prev.callPackage ./pkgs/catppuccin-openbox/package.nix { };
+              # Patches target labwc/wlroots 0.20.2
+              nestwm = prev.callPackage ./pkgs/nestwm/package.nix {
+                inherit (final.unstable) labwc wlroots_0_20;
+              };
               proto = prev.callPackage ./pkgs/proto/package.nix { package = final.unstable.proto; };
               wallpapers =
                 let

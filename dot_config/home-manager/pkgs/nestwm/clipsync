@@ -1,0 +1,38 @@
+#!/bin/sh
+# Mirror the clipboard between the host session and the nested labwc.
+# Started from config/autostart (so WAYLAND_DISPLAY is the nested one);
+# the host display comes from NESTWM_HOST_DISPLAY, set by ./nestwm.
+set -eu
+
+if [ "${1:-}" = copy ]; then
+	# Handler for `wl-paste --watch`: copy the selection from $2 to $3
+	from=$2 to=$3
+	cat >/dev/null # the content on stdin is re-read below with a chosen type
+	[ "${CLIPBOARD_STATE:-data}" = nil ] && exit 0
+
+	types=$(WAYLAND_DISPLAY=$from wl-paste --list-types) || exit 0
+	# ponytail: only one MIME type is mirrored (PNG > other image > UTF-8 text
+	# > first offered); offer all types if some app needs a specific one
+	type=$(printf '%s\n' "$types" | grep -m1 '^image/png$' ||
+		printf '%s\n' "$types" | grep -m1 '^image/' ||
+		printf '%s\n' "$types" | grep -m1 '^text/plain;charset=utf-8$' ||
+		printf '%s\n' "$types" | head -n1)
+
+	tmp=$(mktemp -d)
+	trap 'rm -rf "$tmp"' EXIT
+	WAYLAND_DISPLAY=$from wl-paste -n -t "$type" >"$tmp/new" || exit 0
+	# Skip if the other side already has it, so copies don't bounce back
+	WAYLAND_DISPLAY=$to wl-paste -n -t "$type" >"$tmp/cur" 2>/dev/null || true
+	cmp -s "$tmp/new" "$tmp/cur" && exit 0
+	WAYLAND_DISPLAY=$to wl-copy -t "$type" <"$tmp/new"
+	exit 0
+fi
+
+nested=$WAYLAND_DISPLAY
+host=$NESTWM_HOST_DISPLAY
+
+WAYLAND_DISPLAY=$host wl-paste --watch "$0" copy "$host" "$nested" &
+host_watch=$!
+# Returns when the nested compositor goes away
+wl-paste --watch "$0" copy "$nested" "$host" || true
+kill "$host_watch"

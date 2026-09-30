@@ -1,0 +1,65 @@
+From beb90f7b991874dcfddc6847cbaf5b3fe8b8c526 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 08:46:32 +0900
+Subject: [PATCH 1/7] output: keep alpha and follow scale changes on nested
+ outputs
+
+Prefer ARGB render formats on wayland-backend outputs so that the parent
+compositor can see through the background, and reload the cursor theme
+when the backend requests a new scale.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ src/output.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/src/output.c b/src/output.c
+index 1308f563..37db01b5 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -71,6 +71,14 @@ static uint32_t output_formats_8bit[] = {
+ 	DRM_FORMAT_BGR888,
+ };
+ 
++/* Nested outputs keep alpha so that the parent compositor can see through */
++static uint32_t output_formats_8bit_alpha[] = {
++	DRM_FORMAT_ARGB8888,
++	DRM_FORMAT_ABGR8888,
++	DRM_FORMAT_RGBA8888,
++	DRM_FORMAT_BGRA8888,
++};
++
+ uint32_t output_formats_10bit[] = {
+ 	/* 32 bpp RGB with 10 bit component width */
+ 	DRM_FORMAT_XRGB2101010,
+@@ -199,6 +207,10 @@ output_state_setup_hdr(struct output *output, bool silent)
+ 				}
+ 			}
+ 		}
++	} else if (wlr_output_is_wl(output->wlr_output)
++			&& output_set_render_format(output, output_formats_8bit_alpha,
++				ARRAY_SIZE(output_formats_8bit_alpha), silent)) {
++		/* alpha format set */
+ 	} else {
+ 		if (!output_set_render_format(output, output_formats_8bit,
+ 				ARRAY_SIZE(output_formats_8bit), silent) && !silent) {
+@@ -392,6 +404,15 @@ handle_output_request_state(struct wl_listener *listener, void *data)
+ 	 */
+ 	if (!wlr_output_commit_state(output->wlr_output, event->state)) {
+ 		wlr_log(WLR_ERROR, "Backend requested a new state that could not be applied");
++		return;
++	}
++
++	/* Nested output following the parent's fractional scale */
++	if (event->state->committed & WLR_OUTPUT_STATE_SCALE) {
++		wlr_xcursor_manager_load(server.seat.xcursor_manager,
++			output->wlr_output->scale);
++		cursor_update_focus();
++		cursor_update_image(&server.seat);
+ 	}
+ }
+ 
+-- 
+2.55.0
+

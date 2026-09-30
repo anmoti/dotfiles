@@ -1,0 +1,16 @@
+#!/bin/sh
+# Launcher for the host's keybind: if a nestwm window is focused, open fuzzel
+# (and so the apps it launches) inside that nestwm; otherwise on the host.
+set -eu
+
+pid=$(hyprctl activewindow -j |
+	jq -r 'select(.class == "labwc" and .title == "nestwm") | .pid')
+state="$XDG_RUNTIME_DIR/nestwm/$pid"
+
+if [ -n "$pid" ] && [ -r "$state" ]; then
+	WAYLAND_DISPLAY=$(sed -n 's/^WAYLAND_DISPLAY=//p' "$state")
+	DISPLAY=$(sed -n 's/^DISPLAY=//p' "$state")
+	export WAYLAND_DISPLAY DISPLAY
+fi
+
+exec fuzzel "$@"

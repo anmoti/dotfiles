@@ -1,0 +1,337 @@
+From 9b733a11510e1855a22557a17dc98299673e6d47 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:49:32 +0900
+Subject: [PATCH 4/9] backend/wayland: let the host draw named cursors
+
+Add wlr_wl_output_set_cursor_name(), which sets the host's cursor through
+cursor-shape-v1 so named cursors look exactly like the host's own.
+
+Cursor buffers no longer rely on wp_viewport, which hosts may ignore for
+cursor surfaces (Hyprland does): they are passed with an integer buffer
+scale, and at fractional scales the host cursor is hidden so that wlroots
+falls back to a software cursor.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ backend/wayland/backend.c           |  7 +++
+ backend/wayland/meson.build         |  1 +
+ backend/wayland/output.c            | 73 ++++++++++++++++++++++-------
+ backend/wayland/pointer.c           | 11 +++++
+ include/backend/wayland.h           |  5 +-
+ include/types/wlr_cursor_shape_v1.h | 13 +++++
+ include/wlr/backend/wayland.h       |  8 ++++
+ types/wlr_cursor_shape_v1.c         | 11 +++++
+ 8 files changed, 111 insertions(+), 18 deletions(-)
+ create mode 100644 include/types/wlr_cursor_shape_v1.h
+
+diff --git a/backend/wayland/backend.c b/backend/wayland/backend.c
+index a4848752..3f3aff2f 100644
+--- a/backend/wayland/backend.c
++++ b/backend/wayland/backend.c
+@@ -19,6 +19,7 @@
+ #include "render/drm_format_set.h"
+ #include "render/pixel_format.h"
+ 
++#include "cursor-shape-v1-client-protocol.h"
+ #include "drm-client-protocol.h"
+ #include "fractional-scale-v1-client-protocol.h"
+ #include "linux-dmabuf-v1-client-protocol.h"
+@@ -417,6 +418,9 @@ static void registry_global(void *data, struct wl_registry *registry,
+ 	} else if (strcmp(iface, wp_viewporter_interface.name) == 0) {
+ 		wl->viewporter = wl_registry_bind(registry, name,
+ 			&wp_viewporter_interface, 1);
++	} else if (strcmp(iface, wp_cursor_shape_manager_v1_interface.name) == 0) {
++		wl->cursor_shape_manager = wl_registry_bind(registry, name,
++			&wp_cursor_shape_manager_v1_interface, version < 2 ? version : 2);
+ 	} else if (strcmp(iface, wp_fractional_scale_manager_v1_interface.name) == 0) {
+ 		wl->fractional_scale_manager = wl_registry_bind(registry, name,
+ 			&wp_fractional_scale_manager_v1_interface, 1);
+@@ -557,6 +561,9 @@ static void backend_destroy(struct wlr_backend *backend) {
+ 	if (wl->viewporter) {
+ 		wp_viewporter_destroy(wl->viewporter);
+ 	}
++	if (wl->cursor_shape_manager) {
++		wp_cursor_shape_manager_v1_destroy(wl->cursor_shape_manager);
++	}
+ 	if (wl->fractional_scale_manager) {
+ 		wp_fractional_scale_manager_v1_destroy(wl->fractional_scale_manager);
+ 	}
+diff --git a/backend/wayland/meson.build b/backend/wayland/meson.build
+index cc786aed..67bb0b1a 100644
+--- a/backend/wayland/meson.build
++++ b/backend/wayland/meson.build
+@@ -12,6 +12,7 @@ wlr_files += files(
+ )
+ 
+ client_protos = [
++	'cursor-shape-v1',
+ 	'drm',
+ 	'fractional-scale-v1',
+ 	'linux-dmabuf-v1',
+diff --git a/backend/wayland/output.c b/backend/wayland/output.c
+index 4b5a6212..0fa4e1d0 100644
+--- a/backend/wayland/output.c
++++ b/backend/wayland/output.c
+@@ -19,8 +19,10 @@
+ 
+ #include "backend/wayland.h"
+ #include "render/pixel_format.h"
++#include "types/wlr_cursor_shape_v1.h"
+ #include "types/wlr_output.h"
+ 
++#include "cursor-shape-v1-client-protocol.h"
+ #include "fractional-scale-v1-client-protocol.h"
+ #include "linux-dmabuf-v1-client-protocol.h"
+ #include "linux-drm-syncobj-v1-client-protocol.h"
+@@ -916,9 +918,11 @@ static bool output_set_cursor(struct wlr_output *wlr_output,
+ 	struct wlr_wl_output *output = get_wl_output_from_output(wlr_output);
+ 	struct wlr_wl_backend *backend = output->backend;
+ 
+-	// The cursor buffer is rendered at the output scale
+-	output->cursor.hotspot_x = round(hotspot_x / output->scale);
+-	output->cursor.hotspot_y = round(hotspot_y / output->scale);
++	if (wlr_buffer == NULL && output->cursor.shape != 0) {
++		// Keep the cursor drawn by the host, see wlr_wl_output_set_cursor_name()
++		return true;
++	}
++	output->cursor.shape = 0;
+ 
+ 	if (output->cursor.surface == NULL) {
+ 		output->cursor.surface =
+@@ -926,10 +930,18 @@ static bool output_set_cursor(struct wlr_output *wlr_output,
+ 	}
+ 	struct wl_surface *surface = output->cursor.surface;
+ 
+-	if (output->cursor.viewport == NULL && output->viewport != NULL) {
+-		output->cursor.viewport =
+-			wp_viewporter_get_viewport(backend->viewporter, surface);
++	// The cursor buffer is rendered at the output scale. Hosts may ignore
++	// wp_viewport on cursor surfaces, so only integer scales are expressible:
++	// otherwise hide the host cursor and let wlroots draw a software one.
++	if (wlr_buffer != NULL && output->scale != floor(output->scale)) {
++		wl_surface_attach(surface, NULL, 0, 0);
++		wl_surface_commit(surface);
++		update_wl_output_cursor(output);
++		wl_display_flush(backend->remote_display);
++		return false;
+ 	}
++	output->cursor.hotspot_x = hotspot_x / (int)output->scale;
++	output->cursor.hotspot_y = hotspot_y / (int)output->scale;
+ 
+ 	if (wlr_buffer != NULL) {
+ 		struct wlr_wl_buffer *buffer =
+@@ -938,11 +950,7 @@ static bool output_set_cursor(struct wlr_output *wlr_output,
+ 			return false;
+ 		}
+ 
+-		if (output->cursor.viewport != NULL) {
+-			wp_viewport_set_destination(output->cursor.viewport,
+-				fmax(1, round(wlr_buffer->width / output->scale)),
+-				fmax(1, round(wlr_buffer->height / output->scale)));
+-		}
++		wl_surface_set_buffer_scale(surface, (int)output->scale);
+ 		wl_surface_attach(surface, buffer->wl_buffer, 0, 0);
+ 		wl_surface_damage_buffer(surface, 0, 0, INT32_MAX, INT32_MAX);
+ 		wl_surface_commit(surface);
+@@ -977,9 +985,6 @@ static void output_destroy(struct wlr_output *wlr_output) {
+ 
+ 	wl_list_remove(&output->link);
+ 
+-	if (output->cursor.viewport) {
+-		wp_viewport_destroy(output->cursor.viewport);
+-	}
+ 	if (output->cursor.surface) {
+ 		wl_surface_destroy(output->cursor.surface);
+ 	}
+@@ -1034,12 +1039,46 @@ void update_wl_output_cursor(struct wlr_wl_output *output) {
+ 		assert(output->enter_serial);
+ 
+ 		struct wlr_wl_seat *seat = pointer->seat;
+-		wl_pointer_set_cursor(seat->wl_pointer, output->enter_serial,
+-			output->cursor.surface, output->cursor.hotspot_x,
+-			output->cursor.hotspot_y);
++		if (output->cursor.shape != 0 && seat->cursor_shape_device != NULL) {
++			wp_cursor_shape_device_v1_set_shape(seat->cursor_shape_device,
++				output->enter_serial, output->cursor.shape);
++		} else {
++			wl_pointer_set_cursor(seat->wl_pointer, output->enter_serial,
++				output->cursor.surface, output->cursor.hotspot_x,
++				output->cursor.hotspot_y);
++		}
+ 	}
+ }
+ 
++bool wlr_wl_output_set_cursor_name(struct wlr_output *wlr_output,
++		const char *name) {
++	struct wlr_wl_output *output = get_wl_output_from_output(wlr_output);
++	struct wlr_wl_backend *backend = output->backend;
++
++	uint32_t shape = 0;
++	if (name != NULL) {
++		if (backend->cursor_shape_manager == NULL) {
++			return false;
++		}
++		shape = cursor_shape_v1_from_name(name);
++		uint32_t version =
++			wp_cursor_shape_manager_v1_get_version(backend->cursor_shape_manager);
++		if (shape == 0 || (version < 2 &&
++				shape > WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_ZOOM_OUT)) {
++			return false;
++		}
++	} else if (output->cursor.surface != NULL) {
++		// Hide the host cursor until a new image is set
++		wl_surface_attach(output->cursor.surface, NULL, 0, 0);
++		wl_surface_commit(output->cursor.surface);
++	}
++
++	output->cursor.shape = shape;
++	update_wl_output_cursor(output);
++	wl_display_flush(backend->remote_display);
++	return true;
++}
++
+ static bool output_move_cursor(struct wlr_output *_output, int x, int y) {
+ 	// TODO: only return true if x == current x and y == current y
+ 	return true;
+diff --git a/backend/wayland/pointer.c b/backend/wayland/pointer.c
+index 89e50718..dd27e4e3 100644
+--- a/backend/wayland/pointer.c
++++ b/backend/wayland/pointer.c
+@@ -5,6 +5,7 @@
+ #include <wlr/util/log.h>
+ 
+ #include "backend/wayland.h"
++#include "cursor-shape-v1-client-protocol.h"
+ 
+ #include "pointer-gestures-unstable-v1-client-protocol.h"
+ #include "relative-pointer-unstable-v1-client-protocol.h"
+@@ -517,6 +518,11 @@ void init_seat_pointer(struct wlr_wl_seat *seat) {
+ 		}
+ 	}
+ 
++	if (backend->cursor_shape_manager) {
++		seat->cursor_shape_device = wp_cursor_shape_manager_v1_get_pointer(
++			backend->cursor_shape_manager, seat->wl_pointer);
++	}
++
+ 	if (backend->zwp_relative_pointer_manager_v1) {
+ 		seat->relative_pointer =
+ 			zwp_relative_pointer_manager_v1_get_relative_pointer(
+@@ -531,6 +537,11 @@ void init_seat_pointer(struct wlr_wl_seat *seat) {
+ void finish_seat_pointer(struct wlr_wl_seat *seat) {
+ 	assert(seat->wl_pointer);
+ 
++	if (seat->cursor_shape_device != NULL) {
++		wp_cursor_shape_device_v1_destroy(seat->cursor_shape_device);
++		seat->cursor_shape_device = NULL;
++	}
++
+ 	wl_pointer_release(seat->wl_pointer);
+ 
+ 	struct wlr_wl_pointer *pointer, *tmp;
+diff --git a/include/backend/wayland.h b/include/backend/wayland.h
+index 460b931c..21c124fd 100644
+--- a/include/backend/wayland.h
++++ b/include/backend/wayland.h
+@@ -54,6 +54,7 @@ struct wlr_wl_backend {
+ 	struct wl_subcompositor *subcompositor;
+ 	struct wp_viewporter *viewporter;
+ 	struct wp_fractional_scale_manager_v1 *fractional_scale_manager;
++	struct wp_cursor_shape_manager_v1 *cursor_shape_manager;
+ 	char *drm_render_name;
+ };
+ 
+@@ -136,8 +137,9 @@ struct wlr_wl_output {
+ 	struct {
+ 		struct wlr_wl_pointer *pointer;
+ 		struct wl_surface *surface;
+-		struct wp_viewport *viewport;
+ 		int32_t hotspot_x, hotspot_y; // surface-local (logical) coordinates
++		// wp_cursor_shape_device_v1 shape drawn by the host, 0 if none
++		uint32_t shape;
+ 	} cursor;
+ };
+ 
+@@ -180,6 +182,7 @@ struct wlr_wl_seat {
+ 	struct zwp_pointer_gesture_pinch_v1 *gesture_pinch;
+ 	struct zwp_pointer_gesture_hold_v1 *gesture_hold;
+ 	struct zwp_relative_pointer_v1 *relative_pointer;
++	struct wp_cursor_shape_device_v1 *cursor_shape_device;
+ 
+ 	struct wl_touch *wl_touch;
+ 	struct wlr_touch wlr_touch;
+diff --git a/include/types/wlr_cursor_shape_v1.h b/include/types/wlr_cursor_shape_v1.h
+new file mode 100644
+index 00000000..2210ed11
+--- /dev/null
++++ b/include/types/wlr_cursor_shape_v1.h
+@@ -0,0 +1,13 @@
++#ifndef TYPES_WLR_CURSOR_SHAPE_V1_H
++#define TYPES_WLR_CURSOR_SHAPE_V1_H
++
++#include <stdint.h>
++
++/**
++ * Returns the wp_cursor_shape_device_v1 shape with the given name, or 0 if
++ * unknown. Doesn't depend on the protocol headers, so that it can be used
++ * next to the client-side ones.
++ */
++uint32_t cursor_shape_v1_from_name(const char *name);
++
++#endif
+diff --git a/include/wlr/backend/wayland.h b/include/wlr/backend/wayland.h
+index c732de68..d4b1cb71 100644
+--- a/include/wlr/backend/wayland.h
++++ b/include/wlr/backend/wayland.h
+@@ -73,4 +73,12 @@ void wlr_wl_output_set_app_id(struct wlr_output *output, const char *app_id);
+  */
+ struct wl_surface *wlr_wl_output_get_surface(struct wlr_output *output);
+ 
++/**
++ * Lets the host compositor draw this output's cursor, named by a
++ * cursor-shape-v1 shape name (e.g. "default", "text"). Returns false if the
++ * host or the name isn't supported. NULL stops it and hides the host
++ * cursor; setting a cursor buffer on the output also stops it.
++ */
++bool wlr_wl_output_set_cursor_name(struct wlr_output *output, const char *name);
++
+ #endif
+diff --git a/types/wlr_cursor_shape_v1.c b/types/wlr_cursor_shape_v1.c
+index 563b326e..e89e79bd 100644
+--- a/types/wlr_cursor_shape_v1.c
++++ b/types/wlr_cursor_shape_v1.c
+@@ -1,5 +1,6 @@
+ #include <assert.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <wayland-server-core.h>
+ #include <wayland-util.h>
+ #include <wlr/types/wlr_cursor_shape_v1.h>
+@@ -7,6 +8,7 @@
+ #include <wlr/types/wlr_tablet_tool.h>
+ 
+ #include "cursor-shape-v1-protocol.h"
++#include "types/wlr_cursor_shape_v1.h"
+ #include "types/wlr_tablet_v2.h"
+ 
+ #define CURSOR_SHAPE_MANAGER_V1_VERSION 2
+@@ -263,6 +265,15 @@ static const char *const shape_names[] = {
+ 	[WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_ALL_RESIZE] = "all-resize",
+ };
+ 
++uint32_t cursor_shape_v1_from_name(const char *name) {
++	for (size_t i = 1; i < sizeof(shape_names) / sizeof(shape_names[0]); i++) {
++		if (shape_names[i] != NULL && strcmp(shape_names[i], name) == 0) {
++			return i;
++		}
++	}
++	return 0;
++}
++
+ const char *wlr_cursor_shape_v1_name(enum wp_cursor_shape_device_v1_shape shape) {
+ 	assert(shape < sizeof(shape_names) / sizeof(shape_names[0]));
+ 	return shape_names[shape];
+-- 
+2.55.0
+

@@ -1,0 +1,118 @@
+From 0ed2e656b85a935e6dda36d1aae8ca27c257d055 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:57:36 +0900
+Subject: [PATCH 8/9] xdg-output: allow scaling the logical geometry sent to
+ one client
+
+Add wlr_xdg_output_manager_v1_set_client_scale(), so that Xwayland with
+wlr_xwayland_set_scale() sees outputs in its own coordinate space.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/wlr/types/wlr_xdg_output_v1.h | 13 +++++++++++
+ include/wlr/xwayland/xwayland.h       |  4 ++--
+ types/wlr_xdg_output_v1.c             | 32 +++++++++++++++++++++++++--
+ 3 files changed, 45 insertions(+), 4 deletions(-)
+
+diff --git a/include/wlr/types/wlr_xdg_output_v1.h b/include/wlr/types/wlr_xdg_output_v1.h
+index 4ee8ec3b..b454ad94 100644
+--- a/include/wlr/types/wlr_xdg_output_v1.h
++++ b/include/wlr/types/wlr_xdg_output_v1.h
+@@ -38,6 +38,10 @@ struct wlr_xdg_output_manager_v1 {
+ 	} events;
+ 
+ 	struct {
++		// See wlr_xdg_output_manager_v1_set_client_scale()
++		struct wl_client *scaled_client;
++		float client_scale;
++
+ 		struct wl_listener display_destroy;
+ 		struct wl_listener layout_add;
+ 		struct wl_listener layout_change;
+@@ -48,4 +52,13 @@ struct wlr_xdg_output_manager_v1 {
+ struct wlr_xdg_output_manager_v1 *wlr_xdg_output_manager_v1_create(
+ 	struct wl_display *display, struct wlr_output_layout *layout);
+ 
++/**
++ * Sends one client the logical position and size multiplied by `scale`, for
++ * clients using a different coordinate space such as Xwayland with
++ * wlr_xwayland_set_scale(). Only one client can be scaled; NULL resets.
++ */
++void wlr_xdg_output_manager_v1_set_client_scale(
++	struct wlr_xdg_output_manager_v1 *manager, struct wl_client *client,
++	float scale);
++
+ #endif
+diff --git a/include/wlr/xwayland/xwayland.h b/include/wlr/xwayland/xwayland.h
+index 9d7e0e15..5d43d935 100644
+--- a/include/wlr/xwayland/xwayland.h
++++ b/include/wlr/xwayland/xwayland.h
+@@ -420,8 +420,8 @@ void wlr_xwayland_set_workareas(struct wlr_xwayland *wlr_xwayland,
+  * Lets X11 clients render at `scale` times the compositor's (logical)
+  * coordinates, like Xwayland on an unscaled output ("zero scaling"): X11
+  * geometry is converted by the window manager and Xwayland's surfaces are
+- * shown downscaled by `scale`. X11 sees outputs in pixels, so the
+- * compositor should hide xdg-output from the Xwayland client.
++ * shown downscaled by `scale`. X11 should see outputs scaled likewise, see
++ * wlr_xdg_output_manager_v1_set_client_scale().
+  *
+  * Meant to be set before X11 clients map; existing windows keep their X11
+  * geometry until reconfigured.
+diff --git a/types/wlr_xdg_output_v1.c b/types/wlr_xdg_output_v1.c
+index 26212398..1b82a1ac 100644
+--- a/types/wlr_xdg_output_v1.c
++++ b/types/wlr_xdg_output_v1.c
+@@ -1,4 +1,5 @@
+ #include <assert.h>
++#include <math.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <wlr/types/wlr_output_layout.h>
+@@ -26,10 +27,16 @@ static void output_handle_resource_destroy(struct wl_resource *resource) {
+ 
+ static void output_send_details(struct wlr_xdg_output_v1 *xdg_output,
+ 		struct wl_resource *resource) {
++	struct wlr_xdg_output_manager_v1 *manager = xdg_output->manager;
++	float scale = 1;
++	if (manager->scaled_client != NULL &&
++			wl_resource_get_client(resource) == manager->scaled_client) {
++		scale = manager->client_scale;
++	}
+ 	zxdg_output_v1_send_logical_position(resource,
+-		xdg_output->x, xdg_output->y);
++		lroundf(xdg_output->x * scale), lroundf(xdg_output->y * scale));
+ 	zxdg_output_v1_send_logical_size(resource,
+-		xdg_output->width, xdg_output->height);
++		lroundf(xdg_output->width * scale), lroundf(xdg_output->height * scale));
+ 	if (wl_resource_get_version(resource) < OUTPUT_DONE_DEPRECATED_SINCE_VERSION) {
+ 		zxdg_output_v1_send_done(resource);
+ 	}
+@@ -293,3 +300,24 @@ struct wlr_xdg_output_manager_v1 *wlr_xdg_output_manager_v1_create(
+ 
+ 	return manager;
+ }
++
++void wlr_xdg_output_manager_v1_set_client_scale(
++		struct wlr_xdg_output_manager_v1 *manager, struct wl_client *client,
++		float scale) {
++	manager->scaled_client = client;
++	manager->client_scale = scale;
++	if (client == NULL) {
++		return;
++	}
++
++	struct wlr_xdg_output_v1 *xdg_output;
++	wl_list_for_each(xdg_output, &manager->outputs, link) {
++		struct wl_resource *resource;
++		wl_resource_for_each(resource, &xdg_output->resources) {
++			if (wl_resource_get_client(resource) == client) {
++				output_send_details(xdg_output, resource);
++			}
++		}
++		wlr_output_schedule_done(xdg_output->layout_output->output);
++	}
++}
+-- 
+2.55.0
+

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   imports = [
@@ -16,7 +16,10 @@
       nwg-drawer # waybar
       kdePackages.qtdeclarative # qmlls QML modules (QtQuick etc.)
     ])
-    ++ [ pkgs.local.catppuccin-openbox ]
+    ++ [
+      pkgs.local.catppuccin-openbox
+      pkgs.local.nestwm
+    ]
     ++ pkgs.local.wallpapers;
 
   home.pointerCursor = {
@@ -51,6 +54,20 @@
         qt6Packages.fcitx5-configtool
       ];
     };
+  };
+
+  # home.sessionVariables is only sourced by shells; export these to
+  # environment.d so Hyprland (started by systemd, not a shell) sees them
+  systemd.user.sessionVariables = {
+    inherit (config.home.sessionVariables)
+      XMODIFIERS
+      SDL_IM_MODULE
+      GLFW_IM_MODULE
+      XCURSOR_THEME
+      XCURSOR_SIZE
+      HYPRCURSOR_THEME
+      HYPRCURSOR_SIZE
+      ;
   };
 
   nixpkgs.overlays = [

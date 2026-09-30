@@ -1,0 +1,131 @@
+From 95dd662247025a54ce3520d6760e45d3b67363f4 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 10:50:59 +0900
+Subject: [PATCH 9/9] backend/wayland: use the host's keymap
+
+The host sends its keymap right after wl_seat.get_keyboard, before the
+backend starts and creates the wlr_keyboard, and it used to be dropped
+since no listener was registered yet. Listen right away, keep a keymap
+received before start and apply it once the keyboard is initialized, so
+that the nested session types like the host.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ backend/wayland/seat.c    | 50 +++++++++++++++++++++++++++++++++++++--
+ include/backend/wayland.h |  3 +++
+ 2 files changed, 51 insertions(+), 2 deletions(-)
+
+diff --git a/backend/wayland/seat.c b/backend/wayland/seat.c
+index e42a14de..ef80e220 100644
+--- a/backend/wayland/seat.c
++++ b/backend/wayland/seat.c
+@@ -2,10 +2,12 @@
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sys/mman.h>
+ #include <time.h>
+ #include <unistd.h>
+ 
+ #include <wayland-client-protocol.h>
++#include <xkbcommon/xkbcommon.h>
+ 
+ #include <wlr/interfaces/wlr_keyboard.h>
+ #include <wlr/interfaces/wlr_output.h>
+@@ -18,9 +20,46 @@
+ #include "backend/wayland.h"
+ #include "util/time.h"
+ 
++// Use the host compositor's keymap, so the nested session types the same
+ static void keyboard_handle_keymap(void *data, struct wl_keyboard *wl_keyboard,
+ 		uint32_t format, int32_t fd, uint32_t size) {
++	struct wlr_keyboard *keyboard = data;
++
++	if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
++		close(fd);
++		return;
++	}
++
++	char *str = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+ 	close(fd);
++	if (str == MAP_FAILED) {
++		wlr_log_errno(WLR_ERROR, "Failed to map host keymap");
++		return;
++	}
++
++	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
++	struct xkb_keymap *keymap = NULL;
++	if (context != NULL) {
++		keymap = xkb_keymap_new_from_buffer(context, str, strnlen(str, size),
++			XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
++		xkb_context_unref(context);
++	}
++	munmap(str, size);
++
++	if (keymap == NULL) {
++		wlr_log(WLR_ERROR, "Failed to compile host keymap");
++		return;
++	}
++
++	struct wlr_wl_seat *seat = wl_container_of(keyboard, seat, wlr_keyboard);
++	if (!seat->backend->started) {
++		// The host sends the keymap right away, before the keyboard exists
++		xkb_keymap_unref(seat->pending_keymap);
++		seat->pending_keymap = keymap;
++		return;
++	}
++	wlr_keyboard_set_keymap(keyboard, keymap);
++	xkb_keymap_unref(keymap);
+ }
+ 
+ static void keyboard_handle_enter(void *data, struct wl_keyboard *wl_keyboard,
+@@ -103,8 +142,11 @@ void init_seat_keyboard(struct wlr_wl_seat *seat) {
+ 	snprintf(name, sizeof(name), "wayland-keyboard-%s", seat->name);
+ 
+ 	wlr_keyboard_init(&seat->wlr_keyboard, &keyboard_impl, name);
+-	wl_keyboard_add_listener(seat->wl_keyboard, &keyboard_listener,
+-		&seat->wlr_keyboard);
++	if (seat->pending_keymap != NULL) {
++		wlr_keyboard_set_keymap(&seat->wlr_keyboard, seat->pending_keymap);
++		xkb_keymap_unref(seat->pending_keymap);
++		seat->pending_keymap = NULL;
++	}
+ 
+ 	wl_signal_emit_mutable(&seat->backend->backend.events.new_input,
+ 		&seat->wlr_keyboard.base);
+@@ -288,6 +330,7 @@ void destroy_wl_seat(struct wlr_wl_seat *seat) {
+ 			wlr_keyboard_finish(&seat->wlr_keyboard);
+ 		}
+ 	}
++	xkb_keymap_unref(seat->pending_keymap);
+ 	if (seat->zwp_tablet_seat_v2) {
+ 		finish_seat_tablet(seat);
+ 	}
+@@ -338,6 +381,9 @@ static void seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
+ 
+ 		struct wl_keyboard *wl_keyboard = wl_seat_get_keyboard(wl_seat);
+ 		seat->wl_keyboard = wl_keyboard;
++		// Listen right away so that the initial keymap isn't dropped
++		wl_keyboard_add_listener(wl_keyboard, &keyboard_listener,
++			&seat->wlr_keyboard);
+ 
+ 		if (backend->started) {
+ 			init_seat_keyboard(seat);
+diff --git a/include/backend/wayland.h b/include/backend/wayland.h
+index 21c124fd..70e8e5cb 100644
+--- a/include/backend/wayland.h
++++ b/include/backend/wayland.h
+@@ -173,6 +173,9 @@ struct wlr_wl_seat {
+ 
+ 	struct wl_keyboard *wl_keyboard;
+ 	struct wlr_keyboard wlr_keyboard;
++	// Host keymap received before the backend started (wlr_keyboard not
++	// initialized yet); applied by init_seat_keyboard()
++	struct xkb_keymap *pending_keymap;
+ 
+ 	struct wl_pointer *wl_pointer;
+ 	struct wlr_wl_pointer *active_pointer;
+-- 
+2.55.0
+

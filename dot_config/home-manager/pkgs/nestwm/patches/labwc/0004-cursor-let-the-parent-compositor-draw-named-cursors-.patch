@@ -1,0 +1,128 @@
+From 0331af020922819d3d476cff2de137f46c57195b Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:52:07 +0900
+Subject: [PATCH 4/7] cursor: let the parent compositor draw named cursors when
+ nested
+
+On nested (wayland backend) outputs, named cursors (ours and clients'
+cursor-shape-v1 requests) are passed to the parent through
+wlr_wl_output_set_cursor_name(), so they look exactly like the parent's
+own. Client cursor surfaces are still drawn by us.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ src/input/cursor.c | 48 ++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 42 insertions(+), 6 deletions(-)
+
+diff --git a/src/input/cursor.c b/src/input/cursor.c
+index e8ac7d96..ee87daec 100644
+--- a/src/input/cursor.c
++++ b/src/input/cursor.c
+@@ -3,6 +3,7 @@
+ #include "input/cursor.h"
+ #include <assert.h>
+ #include <time.h>
++#include <wlr/backend/wayland.h>
+ #include <wlr/config.h>
+ #include <wlr/types/wlr_cursor.h>
+ #include <wlr/types/wlr_cursor_shape_v1.h>
+@@ -147,6 +148,40 @@ get_toplevel(struct wlr_surface *surface)
+ 	return NULL;
+ }
+ 
++/*
++ * Nested: let the parent compositor draw named cursors so that they match
++ * its own (see wlr_wl_output_set_cursor_name()). NULL hides its cursor.
++ * Returns true if all outputs are nested and accepted it.
++ */
++static bool
++set_parent_cursor(const char *name)
++{
++	bool ok = !wl_list_empty(&server.outputs);
++	struct output *output;
++	wl_list_for_each(output, &server.outputs, link) {
++		if (!wlr_output_is_wl(output->wlr_output)
++				|| !wlr_wl_output_set_cursor_name(output->wlr_output, name)) {
++			ok = false;
++		}
++	}
++	return ok;
++}
++
++/* parent_name is a cursor-shape-v1 name, name the one for our cursor theme */
++static void
++set_xcursor(struct seat *seat, const char *parent_name, const char *name)
++{
++	if (parent_name && set_parent_cursor(parent_name)) {
++		wlr_cursor_unset_image(seat->cursor);
++		return;
++	}
++	if (set_parent_cursor(NULL)) {
++		/* Make sure the image is set again, the parent's is hidden now */
++		wlr_cursor_unset_image(seat->cursor);
++	}
++	wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, name);
++}
++
+ static void
+ handle_request_set_cursor(struct wl_listener *listener, void *data)
+ {
+@@ -198,6 +233,8 @@ handle_request_set_cursor(struct wl_listener *listener, void *data)
+ 		 * continue to do so as the cursor moves between outputs.
+ 		 */
+ 
++		/* The client draws it, the parent only shows our output */
++		set_parent_cursor(NULL);
+ 		wlr_cursor_set_surface(seat->cursor, event->surface,
+ 			event->hotspot_x, event->hotspot_y);
+ 	}
+@@ -245,7 +282,7 @@ handle_request_set_shape(struct wl_listener *listener, void *data)
+ 	}
+ 
+ 	wlr_log(WLR_DEBUG, "set xcursor to shape %s", shape_name);
+-	wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, shape_name);
++	set_xcursor(seat, shape_name, shape_name);
+ }
+ 
+ static void
+@@ -388,8 +425,7 @@ cursor_set(struct seat *seat, enum lab_cursors cursor)
+ 	}
+ 
+ 	if (seat->cursor_visible) {
+-		wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager,
+-			cursor_names[cursor]);
++		set_xcursor(seat, cursors_xdg[cursor], cursor_names[cursor]);
+ 	}
+ 	seat->server_cursor = cursor;
+ }
+@@ -411,6 +447,7 @@ cursor_update_image(struct seat *seat)
+ 	enum lab_cursors cursor = seat->server_cursor;
+ 
+ 	if (!seat->cursor_visible) {
++		set_parent_cursor(NULL);
+ 		wlr_cursor_unset_image(seat->cursor);
+ 		return;
+ 	}
+@@ -424,7 +461,7 @@ cursor_update_image(struct seat *seat)
+ 		 */
+ 		if (seat->wlr_seat->pointer_state.focused_surface) {
+ 			seat->server_cursor = LAB_CURSOR_DEFAULT;
+-			wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, "");
++			set_xcursor(seat, NULL, "");
+ 			wlr_seat_pointer_clear_focus(seat->wlr_seat);
+ 			cursor_update_focus();
+ 		}
+@@ -437,8 +474,7 @@ cursor_update_image(struct seat *seat)
+ 	 * same cursor as before, and do nothing.
+ 	 */
+ 	wlr_cursor_unset_image(seat->cursor);
+-	wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager,
+-		cursor_names[cursor]);
++	set_xcursor(seat, cursors_xdg[cursor], cursor_names[cursor]);
+ }
+ 
+ static void
+-- 
+2.55.0
+

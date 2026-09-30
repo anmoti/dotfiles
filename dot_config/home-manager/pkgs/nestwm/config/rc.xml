@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- labwc defaults apply otherwise; see labwc-config(5) -->
+<labwc_config>
+  <theme>
+    <!-- catppuccin/openbox, installed via home-manager -->
+    <name>catppuccin-mocha</name>
+    <!-- Only the titlebar's top corners can be rounded, so keep them square -->
+    <cornerRadius>0</cornerRadius>
+  </theme>
+</labwc_config>

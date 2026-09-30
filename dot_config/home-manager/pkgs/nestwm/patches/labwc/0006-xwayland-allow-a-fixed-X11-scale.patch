@@ -1,0 +1,163 @@
+From baa96aae0270f9fee44c9f3842b913d0bcd3cb62 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:57:38 +0900
+Subject: [PATCH 6/7] xwayland: allow a fixed X11 scale
+
+LABWC_XWAYLAND_SCALE sets the zero-scaling X11 scale instead of following
+the output scale, e.g. 2 for apps using GDK_SCALE=2: they are then shown
+resized to the output scale. Xwayland gets scaled xdg-output geometry
+instead of having xdg-output hidden.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/labwc.h |  2 ++
+ src/output.c    |  4 ++--
+ src/server.c    |  5 -----
+ src/xwayland.c  | 48 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 4 files changed, 51 insertions(+), 8 deletions(-)
+
+diff --git a/include/labwc.h b/include/labwc.h
+index 87a42198..6ae982f6 100644
+--- a/include/labwc.h
++++ b/include/labwc.h
+@@ -184,6 +184,7 @@ struct server {
+ 	struct wlr_xwayland *xwayland;
+ 	struct wl_listener xwayland_server_ready;
+ 	struct wl_listener xwayland_xwm_ready;
++	struct wl_listener xwayland_server_start;
+ 	struct wl_listener xwayland_new_surface;
+ #endif
+ 
+@@ -270,6 +271,7 @@ struct server {
+ 	struct wl_list outputs;
+ 	struct wl_listener new_output;
+ 	struct wlr_output_layout *output_layout;
++	struct wlr_xdg_output_manager_v1 *xdg_output_manager;
+ 	uint64_t next_output_id_bit;
+ 
+ 	struct wl_listener output_layout_change;
+diff --git a/src/output.c b/src/output.c
+index afd0826d..889b3a5b 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -814,8 +814,8 @@ output_init(void)
+ 	}
+ 
+ 	/* Enable screen recording with wf-recorder */
+-	wlr_xdg_output_manager_v1_create(server.wl_display,
+-		server.output_layout);
++	server.xdg_output_manager = wlr_xdg_output_manager_v1_create(
++		server.wl_display, server.output_layout);
+ 
+ 	wl_list_init(&server.outputs);
+ 	server.next_output_id_bit = (1 << 0);
+diff --git a/src/server.c b/src/server.c
+index a9f22aa7..e1a91eca 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -331,11 +331,6 @@ server_global_filter(const struct wl_client *client, const struct wl_global *glo
+ 		/* Filter out the xwayland shell for usual clients */
+ 		return false;
+ 	}
+-	if (client == xwayland_client && xwayland_zero_scaling()
+-			&& !strcmp(iface->name, "zxdg_output_manager_v1")) {
+-		/* X11 should see outputs in pixels, see xwayland_zero_scaling() */
+-		return false;
+-	}
+ #endif
+ 
+ 	uint32_t iface_id = parse_privileged_interface(iface->name);
+diff --git a/src/xwayland.c b/src/xwayland.c
+index 8fcd6fd4..316db080 100644
+--- a/src/xwayland.c
++++ b/src/xwayland.c
+@@ -9,6 +9,7 @@
+ #include <wlr/types/wlr_scene.h>
+ #include <wlr/types/wlr_seat.h>
+ #include <wlr/types/wlr_xcursor_manager.h>
++#include <wlr/types/wlr_xdg_output_v1.h>
+ #include <wlr/xwayland.h>
+ #include "buffer.h"
+ #include "common/array.h"
+@@ -1077,6 +1078,42 @@ handle_server_ready(struct wl_listener *listener, void *data)
+ 	session_run_script("xinitrc");
+ }
+ 
++/* LABWC_XWAYLAND_SCALE: fixed X11 scale instead of the output scale, 0 if unset */
++static float
++fixed_scale(void)
++{
++	static float scale = -1;
++	if (scale < 0) {
++		const char *env = getenv("LABWC_XWAYLAND_SCALE");
++		scale = env ? strtof(env, NULL) : 0;
++		if (scale <= 0) {
++			scale = 0;
++		}
++	}
++	return scale;
++}
++
++/* X11 sees outputs in its own coordinates, see wlr_xwayland_set_scale() */
++static void
++update_xdg_output_scale(void)
++{
++	struct wl_client *client = server.xwayland->server
++		? server.xwayland->server->client : NULL;
++	if (client) {
++		wlr_xdg_output_manager_v1_set_client_scale(
++			server.xdg_output_manager, client, server.xwayland->scale);
++	}
++}
++
++static void
++handle_server_start(struct wl_listener *listener, void *data)
++{
++	/* The Xwayland client exists now, before it binds xdg-output */
++	if (xwayland_zero_scaling()) {
++		update_xdg_output_scale();
++	}
++}
++
+ static void
+ handle_xwm_ready(struct wl_listener *listener, void *data)
+ {
+@@ -1115,6 +1152,13 @@ xwayland_server_init(struct wlr_compositor *compositor)
+ 	wl_signal_add(&server.xwayland->events.ready,
+ 		&server.xwayland_xwm_ready);
+ 
++	server.xwayland_server_start.notify = handle_server_start;
++	wl_signal_add(&server.xwayland->server->events.start,
++		&server.xwayland_server_start);
++	if (xwayland_zero_scaling() && fixed_scale()) {
++		wlr_xwayland_set_scale(server.xwayland, fixed_scale());
++	}
++
+ 	xwayland_cursor_name.notify = handle_cursor_name;
+ 	wl_signal_add(&server.xwayland->events.set_cursor_name,
+ 		&xwayland_cursor_name);
+@@ -1151,6 +1195,7 @@ xwayland_server_finish(void)
+ 	wl_list_remove(&server.xwayland_new_surface.link);
+ 	wl_list_remove(&server.xwayland_server_ready.link);
+ 	wl_list_remove(&server.xwayland_xwm_ready.link);
++	wl_list_remove(&server.xwayland_server_start.link);
+ 	wl_list_remove(&xwayland_cursor_name.link);
+ 
+ 	/*
+@@ -1263,10 +1308,11 @@ xwayland_zero_scaling(void)
+ void
+ xwayland_set_output_scale(float scale)
+ {
+-	if (!server.xwayland || !xwayland_zero_scaling()) {
++	if (!server.xwayland || !xwayland_zero_scaling() || fixed_scale()) {
+ 		return;
+ 	}
+ 	wlr_xwayland_set_scale(server.xwayland, scale);
++	update_xdg_output_scale();
+ 	xwayland_update_workarea();
+ }
+ 
+-- 
+2.55.0
+

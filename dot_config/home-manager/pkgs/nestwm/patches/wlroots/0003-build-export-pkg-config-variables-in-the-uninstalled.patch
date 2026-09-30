@@ -1,0 +1,27 @@
+From 28f856626febe88a8b59171b8a2d756039f2121b Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 08:46:24 +0900
+Subject: [PATCH 3/9] build: export pkg-config variables in the uninstalled .pc
+ too
+
+Lets labwc build against the build directory (have_xwayland etc.).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/meson.build b/meson.build
+index 41ce1ea2..40ca0772 100644
+--- a/meson.build
++++ b/meson.build
+@@ -186,4 +186,5 @@ pkgconfig.generate(
+ 	subdirs: versioned_name,
+ 	url: 'https://gitlab.freedesktop.org/wlroots/wlroots',
+ 	variables: wlr_vars,
++	uninstalled_variables: wlr_vars,
+ )
+-- 
+2.55.0
+

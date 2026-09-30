@@ -1,0 +1,99 @@
+From b72f623bea5924e6988fd4597bd4346f2818312e Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 10:51:45 +0900
+Subject: [PATCH 7/7] keyboard: keep the parent's keymap when nested
+
+Keyboards of the wayland backend carry the parent compositor's keymap.
+Don't overwrite it with our layout config, and use it for the keyboard
+group instead, so that the nested session types like the parent.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ src/input/keyboard.c | 33 ++++++++++++++++++++++++++++++++-
+ src/seat.c           |  8 +++++++-
+ 2 files changed, 39 insertions(+), 2 deletions(-)
+
+diff --git a/src/input/keyboard.c b/src/input/keyboard.c
+index 36884144..de80d141 100644
+--- a/src/input/keyboard.c
++++ b/src/input/keyboard.c
+@@ -3,6 +3,7 @@
+ #include "input/keyboard.h"
+ #include <assert.h>
+ #include <stdlib.h>
++#include <wlr/backend/wayland.h>
+ #include <wlr/config.h>
+ #include <wlr/interfaces/wlr_keyboard.h>
+ #include <wlr/types/wlr_keyboard_group.h>
+@@ -808,10 +809,40 @@ set_layout(struct wlr_keyboard *kb)
+ 	xkb_context_unref(context);
+ }
+ 
++/* Keymap sent by the parent compositor when running nested, if any */
++static struct xkb_keymap *
++host_keymap(struct seat *seat)
++{
++	struct input *input;
++	wl_list_for_each(input, &seat->inputs, link) {
++		struct wlr_input_device *dev = input->wlr_input_device;
++		if (dev->type == WLR_INPUT_DEVICE_KEYBOARD
++				&& wlr_input_device_is_wl(dev)) {
++			struct wlr_keyboard *kb = wlr_keyboard_from_input_device(dev);
++			if (kb->keymap) {
++				return kb->keymap;
++			}
++		}
++	}
++	return NULL;
++}
++
+ void
+ keyboard_configure(struct seat *seat, struct wlr_keyboard *kb, bool is_virtual)
+ {
+-	if (!is_virtual) {
++	/*
++	 * Nested: follow the parent's keymap instead of our own layout config.
++	 * The wayland backend keeps its keyboards' keymap in sync with the
++	 * parent and the keyboard group follows them.
++	 */
++	struct xkb_keymap *parent_keymap = host_keymap(seat);
++	if (wlr_input_device_is_wl(&kb->base)) {
++		/* keymap is managed by the wayland backend */
++	} else if (parent_keymap && kb == &seat->keyboard_group->keyboard) {
++		if (!wlr_keyboard_keymaps_match(kb->keymap, parent_keymap)) {
++			wlr_keyboard_set_keymap(kb, parent_keymap);
++		}
++	} else if (!is_virtual) {
+ 		set_layout(kb);
+ 	}
+ 	wlr_keyboard_set_repeat_info(kb, rc.repeat_rate, rc.repeat_delay);
+diff --git a/src/seat.c b/src/seat.c
+index fe85dc26..46fe5adf 100644
+--- a/src/seat.c
++++ b/src/seat.c
+@@ -2,6 +2,7 @@
+ #include <assert.h>
+ #include <stdbool.h>
+ #include <strings.h>
++#include <wlr/backend/wayland.h>
+ #include <wlr/config.h>
+ #include <wlr/types/wlr_cursor.h>
+ #include <wlr/types/wlr_input_device.h>
+@@ -434,7 +435,12 @@ new_keyboard(struct seat *seat, struct wlr_input_device *device, bool is_virtual
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
+-	wlr_keyboard_set_keymap(kb, seat->keyboard_group->keyboard.keymap);
++	if (wlr_input_device_is_wl(device) && kb->keymap) {
++		/* Nested: keep the parent's keymap, the group follows it */
++		wlr_keyboard_set_keymap(&seat->keyboard_group->keyboard, kb->keymap);
++	} else {
++		wlr_keyboard_set_keymap(kb, seat->keyboard_group->keyboard.keymap);
++	}
+ 
+ 	/*
+ 	 * This needs to be before wlr_keyboard_group_add_keyboard().
+-- 
+2.55.0
+

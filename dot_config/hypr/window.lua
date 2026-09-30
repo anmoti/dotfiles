@@ -212,6 +212,15 @@ hl.window_rule({
   float = true,
 })
 
+hl.window_rule({
+  -- ネストした labwc (~/wip/claude/nestwm)。背景の透過は nestwm 側で描くので、ここでは不透明にする
+  name        = "nestwm",
+  match       = { class = "labwc", title = "nestwm" },
+  opacity     = t.opacity_str(t.opacity.opaque, t.opacity.opaque),
+  border_size = 0,
+  no_blur     = true,
+})
+
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 hl.config({
   xwayland = {

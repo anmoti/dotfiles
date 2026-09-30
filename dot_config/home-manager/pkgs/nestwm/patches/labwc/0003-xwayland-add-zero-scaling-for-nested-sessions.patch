@@ -1,0 +1,112 @@
+From cfa02a9d131f6e9ffa68bbdb8b29834d489abcef Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:51:42 +0900
+Subject: [PATCH 3/7] xwayland: add zero scaling for nested sessions
+
+With LABWC_XWAYLAND_ZERO_SCALING=1, X11 clients render in output pixels
+and are shown downscaled (wlr_xwayland_set_scale() follows the output
+scale), like Hyprland's force_zero_scaling. xdg-output is hidden from
+Xwayland so that X11 sees outputs in pixels. Meant for a single nested
+output.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/xwayland.h |  8 ++++++++
+ src/output.c       |  3 +++
+ src/server.c       |  5 +++++
+ src/xwayland.c     | 22 ++++++++++++++++++++++
+ 4 files changed, 38 insertions(+)
+
+diff --git a/include/xwayland.h b/include/xwayland.h
+index 379a2e8a..918765ee 100644
+--- a/include/xwayland.h
++++ b/include/xwayland.h
+@@ -80,6 +80,14 @@ void xwayland_adjust_usable_area(struct view *view,
+ 
+ void xwayland_update_workarea(void);
+ 
++/*
++ * Zero scaling (LABWC_XWAYLAND_ZERO_SCALING=1): X11 clients render in output
++ * pixels and are shown downscaled, like Hyprland's force_zero_scaling.
++ * Meant for a single nested output.
++ */
++bool xwayland_zero_scaling(void);
++void xwayland_set_output_scale(float scale);
++
+ void xwayland_flush(void);
+ 
+ #endif /* HAVE_XWAYLAND */
+diff --git a/src/output.c b/src/output.c
+index 37db01b5..afd0826d 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -413,6 +413,9 @@ handle_output_request_state(struct wl_listener *listener, void *data)
+ 			output->wlr_output->scale);
+ 		cursor_update_focus();
+ 		cursor_update_image(&server.seat);
++#if HAVE_XWAYLAND
++		xwayland_set_output_scale(output->wlr_output->scale);
++#endif
+ 	}
+ }
+ 
+diff --git a/src/server.c b/src/server.c
+index e1a91eca..a9f22aa7 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -331,6 +331,11 @@ server_global_filter(const struct wl_client *client, const struct wl_global *glo
+ 		/* Filter out the xwayland shell for usual clients */
+ 		return false;
+ 	}
++	if (client == xwayland_client && xwayland_zero_scaling()
++			&& !strcmp(iface->name, "zxdg_output_manager_v1")) {
++		/* X11 should see outputs in pixels, see xwayland_zero_scaling() */
++		return false;
++	}
+ #endif
+ 
+ 	uint32_t iface_id = parse_privileged_interface(iface->name);
+diff --git a/src/xwayland.c b/src/xwayland.c
+index 9bca84eb..26f6be24 100644
+--- a/src/xwayland.c
++++ b/src/xwayland.c
+@@ -3,6 +3,7 @@
+ #include "xwayland.h"
+ #include <assert.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <wlr/types/wlr_compositor.h>
+ #include <wlr/types/wlr_output_layout.h>
+ #include <wlr/types/wlr_scene.h>
+@@ -1234,6 +1235,27 @@ xwayland_adjust_usable_area(struct view *view, struct wlr_output_layout *layout,
+ 	usable->height = usable_bottom - usable->y;
+ }
+ 
++bool
++xwayland_zero_scaling(void)
++{
++	static int enabled = -1;
++	if (enabled < 0) {
++		const char *env = getenv("LABWC_XWAYLAND_ZERO_SCALING");
++		enabled = env && !strcmp(env, "1");
++	}
++	return enabled;
++}
++
++void
++xwayland_set_output_scale(float scale)
++{
++	if (!server.xwayland || !xwayland_zero_scaling()) {
++		return;
++	}
++	wlr_xwayland_set_scale(server.xwayland, scale);
++	xwayland_update_workarea();
++}
++
+ void
+ xwayland_update_workarea(void)
+ {
+-- 
+2.55.0
+

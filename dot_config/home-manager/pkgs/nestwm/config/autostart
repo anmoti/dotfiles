@@ -1,0 +1,15 @@
+# Let nestwm-menu find this instance's displays (keyed by the labwc pid,
+# which is also the pid of the nestwm window on the host)
+mkdir -p "$XDG_RUNTIME_DIR/nestwm"
+printf 'WAYLAND_DISPLAY=%s\nDISPLAY=%s\n' "$WAYLAND_DISPLAY" "${DISPLAY:-}" \
+	>"$XDG_RUNTIME_DIR/nestwm/$LABWC_PID"
+
+"$NESTWM_DIR/clipsync" &
+
+# Let the host's fcitx5 serve this session too (its popups stay inside)
+fcitx() {
+	busctl --user call org.fcitx.Fcitx5 /controller \
+		org.fcitx.Fcitx.Controller1 "$1" s "$2" 2>/dev/null
+}
+fcitx OpenWaylandConnection "$WAYLAND_DISPLAY"
+[ -n "${DISPLAY:-}" ] && fcitx OpenX11Connection "$DISPLAY"

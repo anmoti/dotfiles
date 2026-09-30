@@ -1,0 +1,467 @@
+From c9c13dd50dd5afc0a705313ba3c629d5fab9bb0a Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:50:48 +0900
+Subject: [PATCH 5/9] xwayland: support zero scaling
+
+Add wlr_xwayland_set_scale(): X11 clients render at `scale` times the
+compositor's logical coordinates and Xwayland's surfaces are shown
+downscaled, like Xwayland on an unscaled output (Hyprland's
+force_zero_scaling). This keeps X11 clients sharp at fractional scales.
+
+wlr_surface gains client_scale, applied to the surface size and the
+opaque/input regions; the seat converts pointer/touch coordinates and
+cursor hotspots, and the xwm converts X11 geometry, size hints and
+workareas.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/wlr/types/wlr_compositor.h |  9 ++++
+ include/wlr/xwayland/xwayland.h    | 16 ++++++
+ types/seat/wlr_seat_pointer.c      | 19 +++++--
+ types/seat/wlr_seat_touch.c        | 10 ++--
+ types/wlr_compositor.c             | 18 ++++++-
+ xwayland/xwayland.c                | 41 +++++++++++++++
+ xwayland/xwm.c                     | 83 ++++++++++++++++++++++--------
+ 7 files changed, 164 insertions(+), 32 deletions(-)
+
+diff --git a/include/wlr/types/wlr_compositor.h b/include/wlr/types/wlr_compositor.h
+index aff42aea..fca04e1b 100644
+--- a/include/wlr/types/wlr_compositor.h
++++ b/include/wlr/types/wlr_compositor.h
+@@ -174,6 +174,15 @@ struct wlr_surface {
+ 	 */
+ 	struct wlr_surface_state current, pending;
+ 
++	/**
++	 * Extra downscale applied on top of the client's own buffer scale, for
++	 * clients unaware of the output scale (Xwayland with zero scaling). The
++	 * client's surface-local coordinates are multiplied by this; `current`
++	 * width/height and the derived regions are in compositor coordinates.
++	 * 1 by default.
++	 */
++	float client_scale;
++
+ 	struct wl_list cached; // wlr_surface_state.cached_link
+ 
+ 	/**
+diff --git a/include/wlr/xwayland/xwayland.h b/include/wlr/xwayland/xwayland.h
+index f36912b7..210b9b84 100644
+--- a/include/wlr/xwayland/xwayland.h
++++ b/include/wlr/xwayland/xwayland.h
+@@ -50,6 +50,9 @@ struct wlr_xwayland {
+ 	struct wlr_compositor *compositor;
+ 	struct wlr_seat *seat;
+ 
++	// See wlr_xwayland_set_scale(), 1 by default
++	float scale;
++
+ 	struct {
+ 		struct wl_signal destroy;
+ 		struct wl_signal ready;
+@@ -77,6 +80,7 @@ struct wlr_xwayland {
+ 		struct wl_listener server_destroy;
+ 		struct wl_listener seat_destroy;
+ 		struct wl_listener shell_destroy;
++		struct wl_listener compositor_new_surface;
+ 	} WLR_PRIVATE;
+ };
+ 
+@@ -407,6 +411,18 @@ enum wlr_xwayland_icccm_input_model wlr_xwayland_surface_icccm_input_model(
+ void wlr_xwayland_set_workareas(struct wlr_xwayland *wlr_xwayland,
+ 	const struct wlr_box *workareas, size_t num_workareas);
+ 
++/**
++ * Lets X11 clients render at `scale` times the compositor's (logical)
++ * coordinates, like Xwayland on an unscaled output ("zero scaling"): X11
++ * geometry is converted by the window manager and Xwayland's surfaces are
++ * shown downscaled by `scale`. X11 sees outputs in pixels, so the
++ * compositor should hide xdg-output from the Xwayland client.
++ *
++ * Meant to be set before X11 clients map; existing windows keep their X11
++ * geometry until reconfigured.
++ */
++void wlr_xwayland_set_scale(struct wlr_xwayland *xwayland, float scale);
++
+ /**
+  * Fetches the icon set via the _NET_WM_ICON property.
+  *
+diff --git a/types/seat/wlr_seat_pointer.c b/types/seat/wlr_seat_pointer.c
+index 41729dcd..4834d8e4 100644
+--- a/types/seat/wlr_seat_pointer.c
++++ b/types/seat/wlr_seat_pointer.c
+@@ -1,4 +1,5 @@
+ #include <assert.h>
++#include <math.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
+@@ -103,12 +104,14 @@ static void pointer_set_cursor(struct wl_client *client,
+ 		pointer_cursor_surface_handle_commit(surface);
+ 	}
+ 
++	// The hotspot is in the cursor surface's client coordinates
++	float client_scale = surface != NULL ? surface->client_scale : 1;
+ 	struct wlr_seat_pointer_request_set_cursor_event event = {
+ 		.seat_client = seat_client,
+ 		.surface = surface,
+ 		.serial = serial,
+-		.hotspot_x = hotspot_x,
+-		.hotspot_y = hotspot_y,
++		.hotspot_x = round(hotspot_x / client_scale),
++		.hotspot_y = round(hotspot_y / client_scale),
+ 	};
+ 	wl_signal_emit_mutable(&seat_client->seat->events.request_set_cursor, &event);
+ }
+@@ -189,7 +192,8 @@ void wlr_seat_pointer_enter(struct wlr_seat *wlr_seat,
+ 			}
+ 
+ 			wl_pointer_send_enter(resource, serial, surface->resource,
+-				wl_fixed_from_double(sx), wl_fixed_from_double(sy));
++				wl_fixed_from_double(sx * surface->client_scale),
++				wl_fixed_from_double(sy * surface->client_scale));
+ 			pointer_send_frame(resource);
+ 		}
+ 	}
+@@ -245,6 +249,12 @@ void wlr_seat_pointer_send_motion(struct wlr_seat *wlr_seat, uint32_t time,
+ 	wl_fixed_t sy_fixed = wl_fixed_from_double(sy);
+ 	if (wl_fixed_from_double(wlr_seat->pointer_state.sx) != sx_fixed ||
+ 			wl_fixed_from_double(wlr_seat->pointer_state.sy) != sy_fixed) {
++		// Client coordinates, see wlr_surface.client_scale
++		struct wlr_surface *focused = wlr_seat->pointer_state.focused_surface;
++		if (focused != NULL && focused->client_scale != 1) {
++			sx_fixed = wl_fixed_from_double(sx * focused->client_scale);
++			sy_fixed = wl_fixed_from_double(sy * focused->client_scale);
++		}
+ 		struct wl_resource *resource;
+ 		wl_resource_for_each(resource, &client->pointers) {
+ 			if (wlr_seat_client_from_pointer_resource(resource) == NULL) {
+@@ -576,7 +586,8 @@ void seat_client_create_pointer(struct wlr_seat_client *seat_client,
+ 				}
+ 
+ 				wl_pointer_send_enter(resource, serial, focused_surface->resource,
+-					wl_fixed_from_double(sx), wl_fixed_from_double(sy));
++					wl_fixed_from_double(sx * focused_surface->client_scale),
++					wl_fixed_from_double(sy * focused_surface->client_scale));
+ 				pointer_send_frame(resource);
+ 			}
+ 		}
+diff --git a/types/seat/wlr_seat_touch.c b/types/seat/wlr_seat_touch.c
+index 217c19e7..c31b0109 100644
+--- a/types/seat/wlr_seat_touch.c
++++ b/types/seat/wlr_seat_touch.c
+@@ -351,8 +351,9 @@ uint32_t wlr_seat_touch_send_down(struct wlr_seat *seat,
+ 		if (seat_client_from_touch_resource(resource) == NULL) {
+ 			continue;
+ 		}
+-		wl_touch_send_down(resource, serial, time, surface->resource,
+-			touch_id, wl_fixed_from_double(sx), wl_fixed_from_double(sy));
++		wl_touch_send_down(resource, serial, time, surface->resource, touch_id,
++			wl_fixed_from_double(sx * surface->client_scale),
++			wl_fixed_from_double(sy * surface->client_scale));
+ 	}
+ 
+ 	point->client->needs_touch_frame = true;
+@@ -393,8 +394,9 @@ void wlr_seat_touch_send_motion(struct wlr_seat *seat, uint32_t time, int32_t to
+ 		if (seat_client_from_touch_resource(resource) == NULL) {
+ 			continue;
+ 		}
+-		wl_touch_send_motion(resource, time, touch_id, wl_fixed_from_double(sx),
+-			wl_fixed_from_double(sy));
++		wl_touch_send_motion(resource, time, touch_id,
++			wl_fixed_from_double(sx * point->surface->client_scale),
++			wl_fixed_from_double(sy * point->surface->client_scale));
+ 	}
+ 
+ 	point->client->needs_touch_frame = true;
+diff --git a/types/wlr_compositor.c b/types/wlr_compositor.c
+index 75faed19..e370acde 100644
+--- a/types/wlr_compositor.c
++++ b/types/wlr_compositor.c
+@@ -1,4 +1,5 @@
+ #include <assert.h>
++#include <math.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <wayland-server-core.h>
+@@ -243,6 +244,12 @@ static void surface_finalize_pending(struct wlr_surface *surface) {
+ 	pixman_region32_intersect_rect(&pending->buffer_damage,
+ 		&pending->buffer_damage, 0, 0, pending->buffer_width,
+ 		pending->buffer_height);
++
++	// Client coordinates -> compositor coordinates (see client_scale)
++	if (surface->client_scale != 1) {
++		pending->width = round(pending->width / surface->client_scale);
++		pending->height = round(pending->height / surface->client_scale);
++	}
+ }
+ 
+ static void surface_update_damage(pixman_region32_t *buffer_damage,
+@@ -457,14 +464,20 @@ static void surface_update_opaque_region(struct wlr_surface *surface) {
+ 		return;
+ 	}
+ 
++	// ponytail: scaling rounds outwards, so the opaque region may grow by a
++	// pixel at fractional client_scale; shrink it if that ever shows
++	wlr_region_scale(&surface->opaque_region, &surface->current.opaque,
++		1.0 / surface->client_scale);
+ 	pixman_region32_intersect_rect(&surface->opaque_region,
+-		&surface->current.opaque,
++		&surface->opaque_region,
+ 		0, 0, surface->current.width, surface->current.height);
+ }
+ 
+ static void surface_update_input_region(struct wlr_surface *surface) {
++	wlr_region_scale(&surface->input_region, &surface->current.input,
++		1.0 / surface->client_scale);
+ 	pixman_region32_intersect_rect(&surface->input_region,
+-		&surface->current.input,
++		&surface->input_region,
+ 		0, 0, surface->current.width, surface->current.height);
+ }
+ 
+@@ -785,6 +798,7 @@ static struct wlr_surface *surface_create(struct wl_client *client,
+ 	wlr_log(WLR_DEBUG, "New wlr_surface %p (res %p)", surface, surface->resource);
+ 
+ 	surface->compositor = compositor;
++	surface->client_scale = 1;
+ 
+ 	surface_state_init(&surface->current, surface);
+ 	surface_state_init(&surface->pending, surface);
+diff --git a/xwayland/xwayland.c b/xwayland/xwayland.c
+index 300b582e..4aed407a 100644
+--- a/xwayland/xwayland.c
++++ b/xwayland/xwayland.c
+@@ -3,12 +3,14 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <sys/socket.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <time.h>
+ #include <unistd.h>
+ #include <wlr/types/wlr_buffer.h>
++#include <wlr/types/wlr_compositor.h>
+ #include <wlr/types/wlr_seat.h>
+ #include <wlr/util/log.h>
+ #include <wlr/xwayland/shell.h>
+@@ -53,6 +55,39 @@ static void xwayland_mark_ready(struct wlr_xwayland *xwayland) {
+ 	wl_signal_emit_mutable(&xwayland->events.ready, NULL);
+ }
+ 
++static bool is_xwayland_resource(struct wlr_xwayland *xwayland,
++		struct wl_resource *resource) {
++	return xwayland->server != NULL && xwayland->server->client != NULL &&
++		wl_resource_get_client(resource) == xwayland->server->client;
++}
++
++static void handle_compositor_new_surface(struct wl_listener *listener,
++		void *data) {
++	struct wlr_xwayland *xwayland =
++		wl_container_of(listener, xwayland, compositor_new_surface);
++	struct wlr_surface *surface = data;
++	if (is_xwayland_resource(xwayland, surface->resource)) {
++		surface->client_scale = xwayland->scale;
++	}
++}
++
++static enum wl_iterator_result set_surface_scale(struct wl_resource *resource,
++		void *data) {
++	if (strcmp(wl_resource_get_class(resource), "wl_surface") == 0) {
++		wlr_surface_from_resource(resource)->client_scale = *(float *)data;
++	}
++	return WL_ITERATOR_CONTINUE;
++}
++
++void wlr_xwayland_set_scale(struct wlr_xwayland *xwayland, float scale) {
++	xwayland->scale = scale;
++	if (xwayland->server != NULL && xwayland->server->client != NULL) {
++		// Applied on the surfaces' next commit
++		wl_client_for_each_resource(xwayland->server->client,
++			set_surface_scale, &scale);
++	}
++}
++
+ static void handle_server_ready(struct wl_listener *listener, void *data) {
+ 	struct wlr_xwayland *xwayland =
+ 		wl_container_of(listener, xwayland, server_ready);
+@@ -86,6 +121,7 @@ void wlr_xwayland_destroy(struct wlr_xwayland *xwayland) {
+ 	wl_list_remove(&xwayland->server_start.link);
+ 	wl_list_remove(&xwayland->server_ready.link);
+ 	wl_list_remove(&xwayland->shell_destroy.link);
++	wl_list_remove(&xwayland->compositor_new_surface.link);
+ 	wlr_buffer_unlock(xwayland->cursor_buffer);
+ 
+ 	wlr_xwayland_set_seat(xwayland, NULL);
+@@ -107,6 +143,11 @@ struct wlr_xwayland *wlr_xwayland_create_with_server(struct wl_display *wl_displ
+ 
+ 	xwayland->wl_display = wl_display;
+ 	xwayland->compositor = compositor;
++	xwayland->scale = 1;
++
++	xwayland->compositor_new_surface.notify = handle_compositor_new_surface;
++	wl_signal_add(&compositor->events.new_surface,
++		&xwayland->compositor_new_surface);
+ 
+ 	wl_signal_init(&xwayland->events.destroy);
+ 	wl_signal_init(&xwayland->events.new_surface);
+diff --git a/xwayland/xwm.c b/xwayland/xwm.c
+index f31163d9..ca7f71cd 100644
+--- a/xwayland/xwm.c
++++ b/xwayland/xwm.c
+@@ -1,5 +1,6 @@
+ #include <assert.h>
+ #include <drm_fourcc.h>
++#include <math.h>
+ #include <poll.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+@@ -18,6 +19,15 @@
+ #include <xcb/xfixes.h>
+ #include "xwayland/xwm.h"
+ 
++// X11 <-> compositor coordinates, see wlr_xwayland_set_scale()
++static int32_t from_x11(struct wlr_xwm *xwm, int32_t v) {
++	return lround(v / xwm->xwayland->scale);
++}
++
++static int32_t to_x11(struct wlr_xwm *xwm, int32_t v) {
++	return lround(v * xwm->xwayland->scale);
++}
++
+ static const char *const atom_map[ATOM_LAST] = {
+ 	[WL_SURFACE_ID] = "WL_SURFACE_ID",
+ 	[WL_SURFACE_SERIAL] = "WL_SURFACE_SERIAL",
+@@ -961,6 +971,25 @@ static void read_surface_normal_hints(struct wlr_xwm *xwm,
+ 		xsurface->size_hints->max_height = -1;
+ 	}
+ 
++	xcb_size_hints_t *hints = xsurface->size_hints;
++	int32_t *sizes[] = {
++		&hints->x, &hints->y, &hints->width, &hints->height,
++		&hints->min_width, &hints->min_height,
++		&hints->max_width, &hints->max_height,
++		&hints->base_width, &hints->base_height,
++	};
++	for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
++		if (*sizes[i] > 0) { // keep -1 (unset)
++			*sizes[i] = from_x11(xwm, *sizes[i]);
++		}
++	}
++	if (hints->width_inc > 0) {
++		hints->width_inc = fmax(1, from_x11(xwm, hints->width_inc));
++	}
++	if (hints->height_inc > 0) {
++		hints->height_inc = fmax(1, from_x11(xwm, hints->height_inc));
++	}
++
+ 	wl_signal_emit_mutable(&xsurface->events.set_size_hints, NULL);
+ }
+ 
+@@ -1248,8 +1277,10 @@ static void xwm_handle_create_notify(struct wlr_xwm *xwm,
+ 		return;
+ 	}
+ 
+-	xwayland_surface_create(xwm, ev->window, ev->x, ev->y,
+-		ev->width, ev->height, ev->override_redirect);
++	xwayland_surface_create(xwm, ev->window,
++		from_x11(xwm, ev->x), from_x11(xwm, ev->y),
++		from_x11(xwm, ev->width), from_x11(xwm, ev->height),
++		ev->override_redirect);
+ }
+ 
+ static void xwm_handle_destroy_notify(struct wlr_xwm *xwm,
+@@ -1280,10 +1311,12 @@ static void xwm_handle_configure_request(struct wlr_xwm *xwm,
+ 
+ 	struct wlr_xwayland_surface_configure_event wlr_event = {
+ 		.surface = surface,
+-		.x = mask & XCB_CONFIG_WINDOW_X ? ev->x : surface->x,
+-		.y = mask & XCB_CONFIG_WINDOW_Y ? ev->y : surface->y,
+-		.width = mask & XCB_CONFIG_WINDOW_WIDTH ? ev->width : surface->width,
+-		.height = mask & XCB_CONFIG_WINDOW_HEIGHT ? ev->height : surface->height,
++		.x = mask & XCB_CONFIG_WINDOW_X ? from_x11(xwm, ev->x) : surface->x,
++		.y = mask & XCB_CONFIG_WINDOW_Y ? from_x11(xwm, ev->y) : surface->y,
++		.width = mask & XCB_CONFIG_WINDOW_WIDTH ?
++			from_x11(xwm, ev->width) : surface->width,
++		.height = mask & XCB_CONFIG_WINDOW_HEIGHT ?
++			from_x11(xwm, ev->height) : surface->height,
+ 		.mask = mask,
+ 	};
+ 
+@@ -1315,15 +1348,18 @@ static void xwm_handle_configure_notify(struct wlr_xwm *xwm,
+ 		return;
+ 	}
+ 
++	int32_t x = from_x11(xwm, ev->x), y = from_x11(xwm, ev->y);
++	int32_t width = from_x11(xwm, ev->width);
++	int32_t height = from_x11(xwm, ev->height);
+ 	bool geometry_changed =
+-		(xsurface->x != ev->x || xsurface->y != ev->y ||
+-		 xsurface->width != ev->width || xsurface->height != ev->height);
++		(xsurface->x != x || xsurface->y != y ||
++		 xsurface->width != width || xsurface->height != height);
+ 
+ 	if (geometry_changed) {
+-		xsurface->x = ev->x;
+-		xsurface->y = ev->y;
+-		xsurface->width = ev->width;
+-		xsurface->height = ev->height;
++		xsurface->x = x;
++		xsurface->y = y;
++		xsurface->width = width;
++		xsurface->height = height;
+ 	}
+ 
+ 	xwm_update_override_redirect(xsurface, ev->override_redirect);
+@@ -2187,7 +2223,10 @@ void wlr_xwayland_surface_configure(struct wlr_xwayland_surface *xsurface,
+ 	uint32_t mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y |
+ 		XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT |
+ 		XCB_CONFIG_WINDOW_BORDER_WIDTH;
+-	uint32_t values[] = {x, y, width, height, 0};
++	uint32_t values[] = {
++		to_x11(xwm, x), to_x11(xwm, y),
++		to_x11(xwm, width), to_x11(xwm, height), 0,
++	};
+ 	xcb_configure_window(xwm->xcb_conn, xsurface->window_id, mask, values);
+ 
+ 	// If the window size did not change, then we cannot rely on
+@@ -2200,10 +2239,10 @@ void wlr_xwayland_surface_configure(struct wlr_xwayland_surface *xsurface,
+ 			.response_type = XCB_CONFIGURE_NOTIFY,
+ 			.event = xsurface->window_id,
+ 			.window = xsurface->window_id,
+-			.x = x,
+-			.y = y,
+-			.width = width,
+-			.height = height,
++			.x = values[0],
++			.y = values[1],
++			.width = values[2],
++			.height = values[3],
+ 		};
+ 
+ 		xwm_send_event_with_size(xwm->xcb_conn, 0, xsurface->window_id,
+@@ -2886,14 +2925,14 @@ void wlr_xwayland_set_workareas(struct wlr_xwayland *wlr_xwayland,
+ 		return;
+ 	}
+ 
++	struct wlr_xwm *xwm = wlr_xwayland->xwm;
+ 	for (size_t i = 0; i < num_workareas; i++) {
+-		data[4 * i] = workareas[i].x;
+-		data[4 * i + 1] = workareas[i].y;
+-		data[4 * i + 2] = workareas[i].width;
+-		data[4 * i + 3] = workareas[i].height;
++		data[4 * i] = to_x11(xwm, workareas[i].x);
++		data[4 * i + 1] = to_x11(xwm, workareas[i].y);
++		data[4 * i + 2] = to_x11(xwm, workareas[i].width);
++		data[4 * i + 3] = to_x11(xwm, workareas[i].height);
+ 	}
+ 
+-	struct wlr_xwm *xwm = wlr_xwayland->xwm;
+ 	xcb_change_property(xwm->xcb_conn, XCB_PROP_MODE_REPLACE,
+ 			xwm->screen->root, xwm->atoms[NET_WORKAREA],
+ 			XCB_ATOM_CARDINAL, 32, 4 * num_workareas, data);
+-- 
+2.55.0
+

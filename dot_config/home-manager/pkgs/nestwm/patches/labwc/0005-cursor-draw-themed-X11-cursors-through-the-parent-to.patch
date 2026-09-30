@@ -1,0 +1,228 @@
+From 8383bc413e35969da6f2f2564bf54fbe7416ea31 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:52:09 +0900
+Subject: [PATCH 5/7] cursor: draw themed X11 cursors through the parent too
+
+Use wlr_xwayland.cursor_name (XFixes) to tell which cursor X11 displays:
+named ones are mapped from their Xcursor names to cursor-shape-v1 and
+drawn by the parent compositor; unnamed ones fall back to Xwayland's
+cursor image.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/input/cursor.h |   3 ++
+ src/input/cursor.c     | 115 +++++++++++++++++++++++++++++++++++++++++
+ src/xwayland.c         |  14 +++++
+ 3 files changed, 132 insertions(+)
+
+diff --git a/include/input/cursor.h b/include/input/cursor.h
+index 3d7aa71a..8a333af7 100644
+--- a/include/input/cursor.h
++++ b/include/input/cursor.h
+@@ -125,6 +125,9 @@ void cursor_update_focus(void);
+  */
+ void cursor_update_image(struct seat *seat);
+ 
++/* The cursor X11 displays was renamed, see wlr_xwayland.cursor_name */
++void cursor_xwayland_name_changed(struct seat *seat);
++
+ /**
+  * Processes cursor motion. The return value indicates if a client
+  * should be notified. Parameters sx, sy holds the surface coordinates
+diff --git a/src/input/cursor.c b/src/input/cursor.c
+index ee87daec..d037be45 100644
+--- a/src/input/cursor.c
++++ b/src/input/cursor.c
+@@ -2,6 +2,7 @@
+ #define _POSIX_C_SOURCE 200809L
+ #include "input/cursor.h"
+ #include <assert.h>
++#include <string.h>
+ #include <time.h>
+ #include <wlr/backend/wayland.h>
+ #include <wlr/config.h>
+@@ -43,6 +44,10 @@
+ 	#include <wlr/backend/libinput.h>
+ #endif
+ 
++#if HAVE_XWAYLAND
++	#include <wlr/xwayland.h>
++#endif
++
+ #define LAB_CURSOR_SHAPE_V1_VERSION 1
+ 
+ struct constraint {
+@@ -182,6 +187,98 @@ set_xcursor(struct seat *seat, const char *parent_name, const char *name)
+ 	wlr_cursor_set_xcursor(seat->cursor, seat->xcursor_manager, name);
+ }
+ 
++#if HAVE_XWAYLAND
++/* X11 (Xcursor) names for the cursor-shape-v1 ones, others are passed as is */
++static const char *
++x11_cursor_shape(const char *name)
++{
++	static const char *const map[][2] = {
++		{ "left_ptr", "default" }, { "arrow", "default" },
++		{ "top_left_arrow", "default" },
++		{ "xterm", "text" }, { "ibeam", "text" },
++		{ "hand1", "pointer" }, { "hand2", "pointer" },
++		{ "pointing_hand", "pointer" },
++		{ "watch", "wait" }, { "left_ptr_watch", "progress" },
++		{ "question_arrow", "help" }, { "whats_this", "help" },
++		{ "cross", "crosshair" }, { "tcross", "crosshair" },
++		{ "fleur", "move" }, { "size_all", "move" },
++		{ "openhand", "grab" }, { "closedhand", "grabbing" },
++		{ "dnd-none", "grabbing" },
++		{ "X_cursor", "not-allowed" }, { "forbidden", "not-allowed" },
++		{ "circle", "not-allowed" },
++		{ "sb_h_double_arrow", "ew-resize" }, { "size_hor", "ew-resize" },
++		{ "h_double_arrow", "ew-resize" },
++		{ "sb_v_double_arrow", "ns-resize" }, { "size_ver", "ns-resize" },
++		{ "v_double_arrow", "ns-resize" },
++		{ "size_fdiag", "nwse-resize" }, { "size_bdiag", "nesw-resize" },
++		{ "top_left_corner", "nw-resize" }, { "top_right_corner", "ne-resize" },
++		{ "bottom_left_corner", "sw-resize" },
++		{ "bottom_right_corner", "se-resize" },
++		{ "top_side", "n-resize" }, { "bottom_side", "s-resize" },
++		{ "left_side", "w-resize" }, { "right_side", "e-resize" },
++		{ "split_h", "col-resize" }, { "split_v", "row-resize" },
++		{ "plus", "cell" }, { "copy", "copy" }, { "link", "alias" },
++	};
++	for (size_t i = 0; i < ARRAY_SIZE(map); i++) {
++		if (!strcmp(map[i][0], name)) {
++			return map[i][1];
++		}
++	}
++	return name;
++}
++
++/* Last cursor image requested by Xwayland, used when X11's is unnamed */
++static struct {
++	struct wlr_surface *surface;
++	int32_t hotspot_x, hotspot_y;
++	struct wl_listener destroy;
++} xwayland_cursor;
++
++static void
++handle_xwayland_cursor_destroy(struct wl_listener *listener, void *data)
++{
++	wl_list_remove(&xwayland_cursor.destroy.link);
++	xwayland_cursor.surface = NULL;
++}
++
++static bool
++is_xwayland_client(struct wlr_seat_client *seat_client)
++{
++	return seat_client && server.xwayland && server.xwayland->server
++		&& seat_client->client == server.xwayland->server->client;
++}
++
++/* Let the parent draw X11's cursor if it's a named (themed) one */
++static void
++set_xwayland_cursor(struct seat *seat)
++{
++	const char *name = server.xwayland->cursor_name;
++	if (name && set_parent_cursor(x11_cursor_shape(name))) {
++		wlr_log(WLR_DEBUG, "X11 cursor '%s' drawn by the parent", name);
++		wlr_cursor_unset_image(seat->cursor);
++		return;
++	}
++	wlr_log(WLR_DEBUG, "X11 cursor '%s' drawn from its image",
++		name ? name : "(none)");
++	set_parent_cursor(NULL);
++	if (xwayland_cursor.surface) {
++		wlr_cursor_set_surface(seat->cursor, xwayland_cursor.surface,
++			xwayland_cursor.hotspot_x, xwayland_cursor.hotspot_y);
++	}
++}
++
++void
++cursor_xwayland_name_changed(struct seat *seat)
++{
++	if (server.input_mode == LAB_INPUT_STATE_PASSTHROUGH
++			&& seat->cursor_visible
++			&& seat->server_cursor == LAB_CURSOR_CLIENT
++			&& is_xwayland_client(seat->wlr_seat->pointer_state.focused_client)) {
++		set_xwayland_cursor(seat);
++	}
++}
++#endif
++
+ static void
+ handle_request_set_cursor(struct wl_listener *listener, void *data)
+ {
+@@ -233,6 +330,24 @@ handle_request_set_cursor(struct wl_listener *listener, void *data)
+ 		 * continue to do so as the cursor moves between outputs.
+ 		 */
+ 
++#if HAVE_XWAYLAND
++		if (is_xwayland_client(event->seat_client)) {
++			if (xwayland_cursor.surface) {
++				wl_list_remove(&xwayland_cursor.destroy.link);
++			}
++			xwayland_cursor.surface = event->surface;
++			xwayland_cursor.hotspot_x = event->hotspot_x;
++			xwayland_cursor.hotspot_y = event->hotspot_y;
++			if (event->surface) {
++				xwayland_cursor.destroy.notify =
++					handle_xwayland_cursor_destroy;
++				wl_signal_add(&event->surface->events.destroy,
++					&xwayland_cursor.destroy);
++			}
++			set_xwayland_cursor(seat);
++			return;
++		}
++#endif
+ 		/* The client draws it, the parent only shows our output */
+ 		set_parent_cursor(NULL);
+ 		wlr_cursor_set_surface(seat->cursor, event->surface,
+diff --git a/src/xwayland.c b/src/xwayland.c
+index 26f6be24..8fcd6fd4 100644
+--- a/src/xwayland.c
++++ b/src/xwayland.c
+@@ -18,6 +18,7 @@
+ #include "config/rcxml.h"
+ #include "config/session.h"
+ #include "foreign-toplevel/foreign.h"
++#include "input/cursor.h"
+ #include "labwc.h"
+ #include "node.h"
+ #include "output.h"
+@@ -1083,6 +1084,14 @@ handle_xwm_ready(struct wl_listener *listener, void *data)
+ 	xwayland_update_workarea();
+ }
+ 
++static struct wl_listener xwayland_cursor_name;
++
++static void
++handle_cursor_name(struct wl_listener *listener, void *data)
++{
++	cursor_xwayland_name_changed(&server.seat);
++}
++
+ void
+ xwayland_server_init(struct wlr_compositor *compositor)
+ {
+@@ -1106,6 +1115,10 @@ xwayland_server_init(struct wlr_compositor *compositor)
+ 	wl_signal_add(&server.xwayland->events.ready,
+ 		&server.xwayland_xwm_ready);
+ 
++	xwayland_cursor_name.notify = handle_cursor_name;
++	wl_signal_add(&server.xwayland->events.set_cursor_name,
++		&xwayland_cursor_name);
++
+ 	if (setenv("DISPLAY", server.xwayland->display_name, true) < 0) {
+ 		wlr_log_errno(WLR_ERROR, "unable to set DISPLAY for xwayland");
+ 	} else {
+@@ -1138,6 +1151,7 @@ xwayland_server_finish(void)
+ 	wl_list_remove(&server.xwayland_new_surface.link);
+ 	wl_list_remove(&server.xwayland_server_ready.link);
+ 	wl_list_remove(&server.xwayland_xwm_ready.link);
++	wl_list_remove(&xwayland_cursor_name.link);
+ 
+ 	/*
+ 	 * Reset server.xwayland to NULL first to prevent callbacks (like
+-- 
+2.55.0
+

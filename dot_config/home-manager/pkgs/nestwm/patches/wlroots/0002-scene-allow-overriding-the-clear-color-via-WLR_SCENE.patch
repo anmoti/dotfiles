@@ -1,0 +1,102 @@
+From 751819b7f179c41a35b82c2118d67f6918229ae6 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 08:46:22 +0900
+Subject: [PATCH 2/9] scene: allow overriding the clear color via
+ WLR_SCENE_CLEAR_COLOR
+
+Accepts #RRGGBB or #RRGGBBAA. The background is written without blending
+so a translucent color doesn't accumulate across frames, and the
+black-rect culling is skipped when the clear color isn't opaque black.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ types/scene/wlr_scene.c | 43 ++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/types/scene/wlr_scene.c b/types/scene/wlr_scene.c
+index 7bc8b767..f43f4ef4 100644
+--- a/types/scene/wlr_scene.c
++++ b/types/scene/wlr_scene.c
+@@ -1,4 +1,5 @@
+ #include <assert.h>
++#include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <wlr/backend.h>
+@@ -1917,6 +1918,41 @@ struct render_list_constructor_data {
+ 	bool fractional_scale;
+ };
+ 
++// Background color (premultiplied), from WLR_SCENE_CLEAR_COLOR=#RRGGBB[AA].
++// Opaque black unless set.
++static const float *scene_clear_color(void) {
++	static float color[4] = { 0.f, 0.f, 0.f, 1.f };
++	static bool initialized = false;
++	if (initialized) {
++		return color;
++	}
++	initialized = true;
++
++	const char *env = getenv("WLR_SCENE_CLEAR_COLOR");
++	if (env == NULL) {
++		return color;
++	}
++	unsigned int r, g, b, a = 0xff;
++	size_t len = strlen(env);
++	if ((len != 7 && len != 9) || env[0] != '#' ||
++			sscanf(env + 1, "%2x%2x%2x", &r, &g, &b) != 3 ||
++			(len == 9 && sscanf(env + 7, "%2x", &a) != 1)) {
++		wlr_log(WLR_ERROR, "Invalid WLR_SCENE_CLEAR_COLOR '%s', "
++			"expected #RRGGBB or #RRGGBBAA", env);
++		return color;
++	}
++	color[3] = a / 255.f;
++	color[0] = r / 255.f * color[3];
++	color[1] = g / 255.f * color[3];
++	color[2] = b / 255.f * color[3];
++	return color;
++}
++
++static bool scene_clear_color_is_black(void) {
++	const float black[4] = { 0.f, 0.f, 0.f, 1.f };
++	return memcmp(scene_clear_color(), black, sizeof(black)) == 0;
++}
++
+ static bool scene_buffer_is_black_opaque(struct wlr_scene_buffer *scene_buffer) {
+ 	return scene_buffer->is_single_pixel_buffer &&
+ 		scene_buffer->single_pixel_buffer_color[0] == 0 &&
+@@ -1939,6 +1975,7 @@ static bool construct_render_list_iterator(struct wlr_scene_node *node,
+ 	// unless fractional scale is used even the rect itself (to avoid running
+ 	// into issues regarding damage region expansion).
+ 	if (node->type == WLR_SCENE_NODE_RECT && data->calculate_visibility &&
++			scene_clear_color_is_black() &&
+ 			(!data->fractional_scale || data->render_list->size == 0)) {
+ 		struct wlr_scene_rect *rect = wlr_scene_rect_from_node(node);
+ 		float *black = (float[4]){ 0.f, 0.f, 0.f, 1.f };
+@@ -1950,6 +1987,7 @@ static bool construct_render_list_iterator(struct wlr_scene_node *node,
+ 
+ 	// Apply the same special-case to black opaque single-pixel buffers
+ 	if (node->type == WLR_SCENE_NODE_BUFFER && data->calculate_visibility &&
++			scene_clear_color_is_black() &&
+ 			(!data->fractional_scale || data->render_list->size == 0)) {
+ 		struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
+ 
+@@ -2571,10 +2609,13 @@ bool wlr_scene_output_build_state(struct wlr_scene_output *scene_output,
+ 		}
+ 	}
+ 
++	const float *clear = scene_clear_color();
+ 	wlr_render_pass_add_rect(render_pass, &(struct wlr_render_rect_options){
+ 		.box = { .width = buffer->width, .height = buffer->height },
+-		.color = { .r = 0, .g = 0, .b = 0, .a = 1 },
++		.color = { .r = clear[0], .g = clear[1], .b = clear[2], .a = clear[3] },
+ 		.clip = &background,
++		// Replace, don't blend over the previous frame's contents
++		.blend_mode = WLR_RENDER_BLEND_MODE_NONE,
+ 	});
+ 	pixman_region32_fini(&background);
+ 
+-- 
+2.55.0
+

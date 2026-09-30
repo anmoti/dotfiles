@@ -1,0 +1,137 @@
+From 01b355655bbe4a06957e7291cdc4e220124b5aeb Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:51:11 +0900
+Subject: [PATCH 6/9] xwayland: expose the name of the cursor X11 displays
+
+Select XFixes DisplayCursorNotify on the root window and keep the
+displayed cursor's name (set by libXcursor for themed cursors) in
+wlr_xwayland.cursor_name, with a set_cursor_name event. Compositors can
+use it to draw X11 cursors from their own theme.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ include/wlr/xwayland/xwayland.h |  5 ++++
+ xwayland/xwayland.c             |  2 ++
+ xwayland/xwm.c                  | 43 +++++++++++++++++++++++++++++++++
+ 3 files changed, 50 insertions(+)
+
+diff --git a/include/wlr/xwayland/xwayland.h b/include/wlr/xwayland/xwayland.h
+index 210b9b84..9d7e0e15 100644
+--- a/include/wlr/xwayland/xwayland.h
++++ b/include/wlr/xwayland/xwayland.h
+@@ -53,11 +53,16 @@ struct wlr_xwayland {
+ 	// See wlr_xwayland_set_scale(), 1 by default
+ 	float scale;
+ 
++	// Name of the cursor X11 currently displays (as set by libXcursor via
++	// XFixes, e.g. "left_ptr" or "text"), NULL if unnamed
++	char *cursor_name;
++
+ 	struct {
+ 		struct wl_signal destroy;
+ 		struct wl_signal ready;
+ 		struct wl_signal new_surface; // struct wlr_xwayland_surface
+ 		struct wl_signal remove_startup_info; // struct wlr_xwayland_remove_startup_info_event
++		struct wl_signal set_cursor_name;
+ 	} events;
+ 
+ 	/**
+diff --git a/xwayland/xwayland.c b/xwayland/xwayland.c
+index 4aed407a..11232e59 100644
+--- a/xwayland/xwayland.c
++++ b/xwayland/xwayland.c
+@@ -123,6 +123,7 @@ void wlr_xwayland_destroy(struct wlr_xwayland *xwayland) {
+ 	wl_list_remove(&xwayland->shell_destroy.link);
+ 	wl_list_remove(&xwayland->compositor_new_surface.link);
+ 	wlr_buffer_unlock(xwayland->cursor_buffer);
++	free(xwayland->cursor_name);
+ 
+ 	wlr_xwayland_set_seat(xwayland, NULL);
+ 	if (xwayland->own_server) {
+@@ -153,6 +154,7 @@ struct wlr_xwayland *wlr_xwayland_create_with_server(struct wl_display *wl_displ
+ 	wl_signal_init(&xwayland->events.new_surface);
+ 	wl_signal_init(&xwayland->events.ready);
+ 	wl_signal_init(&xwayland->events.remove_startup_info);
++	wl_signal_init(&xwayland->events.set_cursor_name);
+ 
+ 	xwayland->server = server;
+ 	xwayland->display_name = xwayland->server->display_name;
+diff --git a/xwayland/xwm.c b/xwayland/xwm.c
+index ca7f71cd..10001a2f 100644
+--- a/xwayland/xwm.c
++++ b/xwayland/xwm.c
+@@ -3,6 +3,7 @@
+ #include <math.h>
+ #include <poll.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <unistd.h>
+ #include <wlr/types/wlr_buffer.h>
+ #include <wlr/types/wlr_compositor.h>
+@@ -2050,6 +2051,33 @@ static void xwm_handle_unhandled_event(struct wlr_xwm *xwm, xcb_generic_event_t
+ #endif
+ }
+ 
++static void xwm_handle_cursor_notify(struct wlr_xwm *xwm,
++		xcb_xfixes_cursor_notify_event_t *ev) {
++	char *name = NULL;
++	if (ev->name != XCB_ATOM_NONE) {
++		xcb_get_atom_name_reply_t *reply = xcb_get_atom_name_reply(xwm->xcb_conn,
++			xcb_get_atom_name(xwm->xcb_conn, ev->name), NULL);
++		if (reply != NULL) {
++			name = strndup(xcb_get_atom_name_name(reply),
++				xcb_get_atom_name_name_length(reply));
++			free(reply);
++		}
++	}
++
++	wlr_log(WLR_DEBUG, "X11 cursor changed, name: %s", name ? name : "(none)");
++
++	struct wlr_xwayland *xwayland = xwm->xwayland;
++	if ((name == NULL && xwayland->cursor_name == NULL) || (name != NULL &&
++			xwayland->cursor_name != NULL &&
++			strcmp(name, xwayland->cursor_name) == 0)) {
++		free(name);
++		return;
++	}
++	free(xwayland->cursor_name);
++	xwayland->cursor_name = name;
++	wl_signal_emit_mutable(&xwayland->events.set_cursor_name, NULL);
++}
++
+ static int read_x11_events(struct wlr_xwm *xwm) {
+ 	int count = 0;
+ 
+@@ -2068,6 +2096,15 @@ static int read_x11_events(struct wlr_xwm *xwm) {
+ 			continue;
+ 		}
+ 
++		if (xwm->xfixes != NULL && xwm->xfixes->present &&
++				(event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) ==
++				xwm->xfixes->first_event + XCB_XFIXES_CURSOR_NOTIFY) {
++			xwm_handle_cursor_notify(xwm,
++				(xcb_xfixes_cursor_notify_event_t *)event);
++			free(event);
++			continue;
++		}
++
+ 		switch (event->response_type & XCB_EVENT_RESPONSE_TYPE_MASK) {
+ 		case XCB_CREATE_NOTIFY:
+ 			xwm_handle_create_notify(xwm, (xcb_create_notify_event_t *)event);
+@@ -2708,6 +2745,12 @@ struct wlr_xwm *xwm_create(struct wlr_xwayland *xwayland, int wm_fd) {
+ 		sizeof(supported)/sizeof(*supported),
+ 		supported);
+ 
++	// Get notified of the displayed cursor's name, see wlr_xwayland.cursor_name
++	if (xwm->xfixes != NULL && xwm->xfixes->present) {
++		xcb_xfixes_select_cursor_input(xwm->xcb_conn, xwm->screen->root,
++			XCB_XFIXES_CURSOR_NOTIFY_MASK_DISPLAY_CURSOR);
++	}
++
+ 	if (xwm->xwayland->server->options.terminate_delay > 0 &&
+ 			xwm->xfixes_major_version >= 6) {
+ 		xcb_xfixes_set_client_disconnect_mode(xwm->xcb_conn,
+-- 
+2.55.0
+

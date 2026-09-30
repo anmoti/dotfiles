@@ -1,0 +1,47 @@
+From 7806b412050e57feccf849e1747838f0048ed0a0 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 08:46:34 +0900
+Subject: [PATCH 2/7] main: unset LABWC_UNSET_AFTER_INIT variables after
+ startup
+
+Variables needed only by labwc itself (e.g. a GL stack injected by a
+wrapper such as nixGL) are dropped once the renderer is up, so they
+don't leak into spawned clients.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ src/main.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/src/main.c b/src/main.c
+index 081bd62a..9201021a 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -278,6 +278,23 @@ main(int argc, char *argv[])
+ 	server_init();
+ 	server_start();
+ 
++	/*
++	 * Drop variables that only labwc itself needs (e.g. a GL stack injected
++	 * by a wrapper) so that they don't leak into spawned clients. The
++	 * renderer has already been initialized at this point.
++	 */
++	const char *unset_vars = getenv("LABWC_UNSET_AFTER_INIT");
++	if (unset_vars) {
++		gchar **names = g_strsplit(unset_vars, ":", -1);
++		for (gchar **name = names; *name; name++) {
++			if (**name) {
++				unsetenv(*name);
++			}
++		}
++		g_strfreev(names);
++		unsetenv("LABWC_UNSET_AFTER_INIT");
++	}
++
+ 	struct theme theme = { 0 };
+ 	theme_init(&theme, rc.theme_name);
+ 	rc.theme = &theme;
+-- 
+2.55.0
+

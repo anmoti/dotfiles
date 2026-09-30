@@ -1,0 +1,36 @@
+From eafd2ba67cb371a789185a09b6e0f92e9b5d61b2 Mon Sep 17 00:00:00 2001
+From: anmoti <77442643+anmoti@users.noreply.github.com>
+Date: Wed, 30 Sep 2026 09:51:13 +0900
+Subject: [PATCH 7/9] xwayland: name the root cursor left_ptr
+
+The compositor sets the default arrow as X11's root cursor. Name it like
+libXcursor would so that it is reported in wlr_xwayland.cursor_name too.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_012X41FaHDG1j8zRZcCfwo6r
+---
+ xwayland/xwm.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/xwayland/xwm.c b/xwayland/xwm.c
+index 10001a2f..a71151ae 100644
+--- a/xwayland/xwm.c
++++ b/xwayland/xwm.c
+@@ -2641,6 +2641,14 @@ void xwm_set_cursor(struct wlr_xwm *xwm, struct wlr_buffer *buffer,
+ 	xwm->cursor = xcb_generate_id(xwm->xcb_conn);
+ 	xcb_render_create_cursor(xwm->xcb_conn, xwm->cursor, pic, hotspot_x,
+ 		hotspot_y);
++	// Compositors set the default arrow here; name it like libXcursor would
++	// so that it shows up in wlr_xwayland.cursor_name
++	if (xwm->xfixes != NULL && xwm->xfixes->present &&
++			xwm->xfixes_major_version >= 2) {
++		static const char name[] = "left_ptr";
++		xcb_xfixes_set_cursor_name(xwm->xcb_conn, xwm->cursor,
++			sizeof(name) - 1, name);
++	}
+ 	xcb_free_pixmap(xwm->xcb_conn, pix);
+ 	xcb_render_free_picture(xwm->xcb_conn, pic);
+ 
+-- 
+2.55.0
+
