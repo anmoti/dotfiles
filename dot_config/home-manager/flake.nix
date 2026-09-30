@@ -13,11 +13,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    flake-parts.follows = "llm-agents/flake-parts";
+
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     mcp-servers.url = "github:natsukium/mcp-servers-nix";
 
-    mcp-hub.url = "github:ravitemer/mcp-hub";
+    mcp-hub = {
+      url = "github:ravitemer/mcp-hub";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
   };
 
   outputs =
