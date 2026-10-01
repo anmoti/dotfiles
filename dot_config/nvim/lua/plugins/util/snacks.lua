@@ -53,6 +53,9 @@ return {
       lazygit = {
         enabled = true,
       },
+      gh = {
+        enabled = true,
+      },
     },
     keys = {
       {
@@ -174,6 +177,35 @@ return {
           Snacks.lazygit.log_file()
         end,
         desc = "File",
+      },
+      {
+        "<leader>gi",
+        function()
+          Snacks.picker.gh_issue()
+        end,
+        desc = "GitHub Issues (open)",
+      },
+      {
+        "<leader>gI",
+        function()
+          Snacks.picker.gh_issue({ state = "all" })
+        end,
+        desc = "GitHub Issues (all)",
+      },
+      {
+        "<leader>gp",
+        function()
+          Snacks.picker.gh_pr()
+        end,
+        desc = "GitHub PRs (open)",
+      },
+      {
+        "<leader>gP",
+        function()
+          -- limit=40 以上だと GitHub GraphQL が 502/504 を返す (desert-sabaku/suzukaze)
+          Snacks.picker.gh_pr({ state = "all", limit = 20 })
+        end,
+        desc = "GitHub PRs (all)",
       },
       {
         "<leader>fc",

@@ -48,6 +48,7 @@
           fd # Snacks.nvim
           ripgrep # Snacks.nvim picker.grep()
           lazygit # Snacks.nvim lazygit
+          gh # Snacks.nvim gh
           doppler # codecompanion (api_key)
 
           bash-language-server # lspconfig[bashls]
