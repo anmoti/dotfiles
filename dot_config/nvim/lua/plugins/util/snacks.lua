@@ -74,6 +74,27 @@ return {
         desc = "Buffers",
       },
       {
+        "<leader>gs",
+        function()
+          Snacks.picker.git_status()
+        end,
+        desc = "Git Status",
+      },
+      {
+        "<leader>gd",
+        function()
+          Snacks.picker.git_diff()
+        end,
+        desc = "Git Diff",
+      },
+      {
+        "<leader>gl",
+        function()
+          Snacks.picker.git_log()
+        end,
+        desc = "Git Log",
+      },
+      {
         "<leader>fc",
         function()
           local history_file = vim.fn.stdpath("state") .. "/conf_history"

@@ -11,6 +11,7 @@ return {
       preset = "helix",
       spec = {
         { "<leader>f", group = "Find" },
+        { "<leader>g", group = "Git" },
         { "<leader>l", group = "Code: LSP/Language" },
       },
       plugins = {
