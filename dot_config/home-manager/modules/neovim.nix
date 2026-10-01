@@ -47,6 +47,7 @@
           git-lfs # git status in LFS repos (filter.lfs.required)
           fd # Snacks.nvim
           ripgrep # Snacks.nvim picker.grep()
+          lazygit # Snacks.nvim lazygit
           doppler # codecompanion (api_key)
 
           bash-language-server # lspconfig[bashls]

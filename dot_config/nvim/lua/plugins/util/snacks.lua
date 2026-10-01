@@ -50,6 +50,9 @@ return {
       terminal = {
         enabled = true,
       },
+      lazygit = {
+        enabled = true,
+      },
     },
     keys = {
       {
@@ -72,6 +75,13 @@ return {
           Snacks.picker.buffers()
         end,
         desc = "Buffers",
+      },
+      {
+        "<leader>gg",
+        function()
+          Snacks.lazygit()
+        end,
+        desc = "Lazygit",
       },
       {
         "<leader>gs",

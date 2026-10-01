@@ -23,6 +23,7 @@
     # CLI Apps
     unstable.chezmoi
     docker-compose
+    lazygit
     unstable.wakatime-cli
     opentofu
   ];
