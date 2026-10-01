@@ -12,6 +12,8 @@ return {
       spec = {
         { "<leader>f", group = "Find" },
         { "<leader>g", group = "Git" },
+        { "<leader>gl", group = "Log" },
+        { "<leader>glg", group = "Lazygit" },
         { "<leader>l", group = "Code: LSP/Language" },
       },
       plugins = {

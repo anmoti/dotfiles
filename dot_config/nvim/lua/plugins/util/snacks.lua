@@ -88,21 +88,92 @@ return {
         function()
           Snacks.picker.git_status()
         end,
-        desc = "Git Status",
+        desc = "Status",
       },
       {
         "<leader>gd",
         function()
           Snacks.picker.git_diff()
         end,
-        desc = "Git Diff",
+        desc = "Diff",
       },
       {
-        "<leader>gl",
+        "<leader>gb",
+        function()
+          Snacks.picker.git_branches()
+        end,
+        desc = "Branches",
+      },
+      {
+        "<leader>gf",
+        function()
+          Snacks.picker.git_files()
+        end,
+        desc = "Files",
+      },
+      {
+        "<leader>gG",
+        function()
+          Snacks.picker.git_grep()
+        end,
+        desc = "Grep",
+      },
+      {
+        "<leader>gS",
+        function()
+          Snacks.picker.git_stash()
+        end,
+        desc = "Stash",
+      },
+      {
+        "<leader>go",
+        function()
+          Snacks.gitbrowse()
+        end,
+        mode = { "n", "v" },
+        desc = "Browse",
+      },
+      {
+        "<leader>gm",
+        function()
+          Snacks.git.blame_line()
+        end,
+        desc = "Blame Line",
+      },
+      {
+        "<leader>glc",
         function()
           Snacks.picker.git_log()
         end,
-        desc = "Git Log",
+        desc = "Commit",
+      },
+      {
+        "<leader>glf",
+        function()
+          Snacks.picker.git_log_file()
+        end,
+        desc = "File",
+      },
+      {
+        "<leader>gll",
+        function()
+          Snacks.picker.git_log_line()
+        end,
+        desc = "Line",
+      },
+      {
+        "<leader>glgc",
+        function()
+          Snacks.lazygit.log()
+        end,
+        desc = "Commit",
+      },
+      {
+        "<leader>glgf",
+        function()
+          Snacks.lazygit.log_file()
+        end,
+        desc = "File",
       },
       {
         "<leader>fc",
