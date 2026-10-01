@@ -60,6 +60,7 @@ When a file is removed from chezmoi source, always ask the user to manually dele
 .chezmoiscripts/       # Scripts run on chezmoi apply
 dot_config/
   home-manager/        # Nix Home Manager flake
+  nix/                 # nix.conf (binary caches)
   nvim/                # Neovim config
   hypr/                # Hyprland WM config (Lua)
   sway/                # Sway WM config
@@ -86,7 +87,7 @@ Use `pkgu` only when a package is unavailable in `pkgs` or the user specifically
 
 Packages from two nixpkgs channels — `pkgs` (`nixos-26.05`) and `pkgu` (unstable) — plus
 `llm-agents.nix` (github:numtide/llm-agents.nix) for AI binaries (`claude-code`, `copilot-language-server`).
-The flake's `nixConfig` pre-configures `cache.numtide.com` as a binary substituter; without it these packages build from source.
+`cache.numtide.com` is configured as a binary substituter in `dot_config/nix/nix.conf` (not in the flake's `nixConfig`, so it also applies to `nix shell` etc.); without it these packages build from source.
 Custom packages live in `pkgs/`.
 
 Both home configurations pass `packages = localPackages` via `extraSpecialArgs`, so all modules receive a `packages` argument.
