@@ -1,5 +1,5 @@
 diff --git a/lua/fyler/extensions/git.lua b/lua/fyler/extensions/git.lua
-index 14f89ce..4325be4 100644
+index 14f89ce..6fcf761 100644
 --- a/lua/fyler/extensions/git.lua
 +++ b/lua/fyler/extensions/git.lua
 @@ -21,6 +21,8 @@ local default_icons = {
@@ -11,7 +11,16 @@ index 14f89ce..4325be4 100644
    ['??'] = { icon = '?', hl = 'FylerGitUntracked' },
    [' D'] = { icon = '-', hl = 'FylerGitDeleted' },
    ['D '] = { icon = '-', hl = 'FylerGitStaged' },
-@@ -90,16 +92,50 @@ function H.store_known_roots()
+@@ -31,6 +33,8 @@ local default_icons = {
+ local default_highlights_tbl
+ local refresh_count = 0
+ local status_cache = {}
++-- root -> set of tracked paths whose `filter` attribute is `lfs`
++local lfs_cache = {}
+ local H = {}
+ 
+ function H.repo_root(path)
+@@ -90,17 +94,56 @@ function H.store_known_roots()
  end
  
  function H.propagate_to_parents(statuses)
@@ -46,7 +55,7 @@ index 14f89ce..4325be4 100644
        dir = parent
      end
 +    ::continue::
-+  end
+   end
 +
 +  return dir_codes
 +end
@@ -60,10 +69,25 @@ index 14f89ce..4325be4 100644
 +    local parent = libpath.to_dirname(dir)
 +    if parent == dir then break end
 +    dir = parent
-   end
++  end
++end
++
++function H.is_lfs(path)
++  local root = H.repo_root(path)
++  return root and lfs_cache[root] and lfs_cache[root][path] or false
  end
  
-@@ -156,7 +192,7 @@ function H.statuses_async(entries, force, cb)
+ function H.statuses_async(entries, force, cb)
+@@ -145,7 +188,7 @@ function H.statuses_async(entries, force, cb)
+     total = total + 1
+   end
+ 
+-  local done = util.promise_all(total, function()
++  local done = util.promise_all(total * 2, function()
+     local all_statuses = {}
+     for root, _ in pairs(repos) do
+       for path, xy in pairs(status_cache[root] or {}) do
+@@ -156,11 +199,21 @@ function H.statuses_async(entries, force, cb)
    end)
  
    for root, _ in pairs(repos_to_fetch) do
@@ -72,19 +96,43 @@ index 14f89ce..4325be4 100644
        status_cache[root] = {}
        if result.code == 0 then H.parse_porcelain(result.stdout, root, status_cache[root]) end
        done()
-@@ -201,9 +237,32 @@ extensions.register({
+     end)
++    -- Pure-git pathspec, so git-lfs itself does not need to be installed.
++    vim.system({ 'git', '-C', root, 'ls-files', '-z', ':(attr:filter=lfs)' }, { text = true }, function(result)
++      lfs_cache[root] = {}
++      if result.code == 0 then
++        for _, path in ipairs(vim.split(result.stdout, '\0', { plain = true, trimempty = true })) do
++          lfs_cache[root][libpath.do_join(root, path)] = true
++        end
++      end
++      done()
++    end)
+   end
+ end
+ 
+@@ -180,6 +233,7 @@ function H.get_default_highlights()
+     FylerGitConflict = { fg = '#E06C75' },
+     FylerGitDeleted = { fg = '#E06C75' },
+     FylerGitIgnored = { fg = getfg('Comment') },
++    FylerGitLfs = { fg = '#C678DD' },
+     FylerGitModified = { fg = '#E5C07B' },
+     FylerGitRenamed = { fg = getfg('Directory') },
+     FylerGitStaged = { fg = '#98C379' },
+@@ -201,10 +255,38 @@ extensions.register({
        local current_count = refresh_count
  
        local gc = H.git_col(lines)
 -      local function apply(i, item, stat)
-+      local function apply(i, item, stat, codes)
++      local function apply(i, item, stat, codes, lfs)
          local icon, hl = H.get_icon(stat, cfg.icons)
-         if not hl then return end
+-        if not hl then return end
+-        if icon then
++        if not hl and not lfs then return end
 +
 +        -- Directories may aggregate several distinct status codes among
 +        -- their descendants (e.g. staged `+` and untracked `?`); show one
 +        -- icon per distinct code instead of collapsing to a single one.
-+        local segments = { { icon, hl } }
++        local segments = icon and { { icon, hl } } or {}
 +        if codes then
 +          local ordered = {}
 +          for xy in pairs(codes) do
@@ -103,10 +151,16 @@ index 14f89ce..4325be4 100644
 +          if #list > 0 then segments = list end
 +        end
 +
-         if icon then
++        if lfs then
++          segments[#segments + 1] = { '@', 'FylerGitLfs' }
++          hl = hl or 'FylerGitLfs'
++        end
++
++        if #segments > 0 then
            if cfg.inline then
              pcall(
-@@ -212,7 +271,7 @@ extensions.register({
+               vim.api.nvim_buf_set_extmark,
+@@ -212,7 +294,7 @@ extensions.register({
                hl_ns,
                i - 1,
                item._name_col + #item.name,
@@ -115,7 +169,7 @@ index 14f89ce..4325be4 100644
              )
            else
              pcall(
-@@ -221,7 +280,7 @@ extensions.register({
+@@ -221,7 +303,7 @@ extensions.register({
                hl_ns,
                i - 1,
                0,
@@ -124,7 +178,7 @@ index 14f89ce..4325be4 100644
              )
            end
          end
-@@ -236,11 +295,11 @@ extensions.register({
+@@ -236,11 +318,12 @@ extensions.register({
        end
        H.statuses_async(visible, args and args.force, function(statuses)
          if current_count == refresh_count then
@@ -135,7 +189,8 @@ index 14f89ce..4325be4 100644
 -            local stat = statuses[item.path]
 -            if stat then apply(i, item, stat) end
 +            local stat = statuses[item.path] or H.ignored_ancestor(statuses, item.path)
-+            if stat then apply(i, item, stat, item.type == 'directory' and dir_codes[item.path]) end
++            local lfs = item.type ~= 'directory' and H.is_lfs(item.path)
++            if stat or lfs then apply(i, item, stat, item.type == 'directory' and dir_codes[item.path], lfs) end
            end
          end
        end)

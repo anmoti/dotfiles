@@ -53,6 +53,7 @@ return {
           FylerGitRenamed = { fg = colors.yellow },
           FylerGitConflict = { fg = colors.yellow },
           FylerGitIgnored = { fg = colors.overlay0 },
+          FylerGitLfs = { fg = colors.mauve },
         }
       end,
       auto_integrations = true,
