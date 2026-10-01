@@ -44,6 +44,7 @@
           coreutils # sha256sum (blink.cmp), tee (:SudoWrite)
           curl
           git
+          git-lfs # git status in LFS repos (filter.lfs.required)
           fd # Snacks.nvim
           ripgrep # Snacks.nvim picker.grep()
           doppler # codecompanion (api_key)
