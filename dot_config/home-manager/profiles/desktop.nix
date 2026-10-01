@@ -50,7 +50,7 @@
          })
         qt6Packages.fcitx5-qt
         fcitx5-gtk
-        fcitx5-skk
+        (fcitx5-skk.override { enableQt = true; })
         qt6Packages.fcitx5-configtool
       ];
     };
@@ -69,22 +69,4 @@
       HYPRCURSOR_SIZE
       ;
   };
-
-  nixpkgs.overlays = [
-    (final: prev: {
-      fcitx5-skk = prev.fcitx5-skk.overrideAttrs (old: {
-        cmakeFlags = [
-          "-DENABLE_QT=TRUE"
-          "-DSKK_PATH=${prev.skkDictionaries.l}/share/skk"
-        ];
-        buildInputs = (old.buildInputs or []) ++ [
-          prev.qt6.qtbase
-          prev.qt6Packages.fcitx5-qt
-        ];
-        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-          prev.qt6.wrapQtAppsHook
-        ];
-      });
-    })
-  ];
 }
