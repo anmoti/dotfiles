@@ -68,7 +68,7 @@
           tailwindcss-language-server # lspconfig[tailwindcss]
           gopls # lspconfig[gopls]
           rustup # lspconfig[rust_analyzer]
-          nixd # lspconfig[nixd]
+          local.nixd # lspconfig[nixd]
           docker-language-server # lspconfig[docker-language-server]
           opentofu # lspconfig[tofu_ls] (schema, format)
           tofu-ls # lspconfig[tofu_ls]

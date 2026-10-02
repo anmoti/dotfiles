@@ -14,6 +14,12 @@
 
     mcp-servers.url = "github:natsukium/mcp-servers-nix";
 
+    # 2.9.3 contains the completion retrigger fix (#887, #888); drop once nixpkgs ships >= 2.9.3
+    nixd = {
+      url = "github:nix-community/nixd/2.9.3";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     mcp-hub = {
       url = "github:ravitemer/mcp-hub";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +35,7 @@
       llm-agents,
       mcp-servers,
       mcp-hub,
+      nixd,
       ...
     }:
     let
@@ -48,10 +55,22 @@
             unstable = import nixpkgs-unstable {
               inherit system;
               config = prev.config;
+              overlays = [
+                (uFinal: uPrev: {
+                  nixd =
+                    if prev.lib.versionAtLeast uPrev.nixd.version "2.9.3" then
+                      prev.lib.warn
+                        "nixpkgs-unstable now provides nixd >= 2.9.3 (${uPrev.nixd.version}); you can drop the custom nixd flake input."
+                        uPrev.nixd
+                    else
+                      nixd.packages.${system}.nixd;
+                 })
+              ];
             };
             llm-agents = llm-agents.packages.${system};
             mcp-hub = mcp-hub.packages.${system};
             local = {
+              nixd = nixd.packages.${system}.nixd;
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
               catppuccin-openbox = prev.callPackage ./pkgs/catppuccin-openbox/package.nix { };
