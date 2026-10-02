@@ -1,11 +1,14 @@
 {
   "nixd": {
     "nixpkgs": {
-      "expr": "(builtins.getFlake \"path:${workspaceFolder}\").inputs.nixpkgs.legacyPackages.x86_64-linux"
+      "expr": "(import ${workspaceFolder}/nixd-options.nix).nixpkgs"
     },
     "options": {
       "home_manager": {
-        "expr": "(builtins.getFlake \"path:${workspaceFolder}\").homeConfigurations.lsp.options"
+        "expr": "(import ${workspaceFolder}/nixd-options.nix).home-manager"
+      },
+      "nixos": {
+        "expr": "{ }"
       }
     }
   }
