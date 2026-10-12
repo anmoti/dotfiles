@@ -34,7 +34,7 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    install -Dm644 config/rc.xml config/autostart config/shutdown -t $out/share/nestwm/config
+    install -Dm644 config/* -t $out/share/nestwm/config
     install -Dm755 clipsync -t $out/share/nestwm
     install -Dm755 nestwm.sh $out/bin/nestwm
     substituteInPlace $out/bin/nestwm \

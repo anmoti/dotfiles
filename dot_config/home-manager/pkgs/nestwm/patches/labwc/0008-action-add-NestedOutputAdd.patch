@@ -1,0 +1,82 @@
+diff --git a/include/output.h b/include/output.h
+index c17defa4..00edb75e 100644
+--- a/include/output.h
++++ b/include/output.h
+@@ -66,6 +66,8 @@ struct output *output_get_adjacent(struct output *output,
+ bool output_is_usable(struct output *output);
+ void output_update_usable_area(struct output *output);
+ void output_update_all_usable_areas(bool layout_changed);
++/* Nested: open another window in the parent compositor as a new output */
++void output_nested_add(void);
+ bool output_get_tearing_allowance(struct output *output);
+ struct wlr_box output_usable_area_in_layout_coords(struct output *output);
+ void handle_output_power_manager_set_mode(struct wl_listener *listener,
+diff --git a/src/action.c b/src/action.c
+index 31a8fe5f..bac25655 100644
+--- a/src/action.c
++++ b/src/action.c
+@@ -123,6 +123,7 @@ struct action_arg_list {
+ 	X(FOR_EACH, "ForEach") \
+ 	X(VIRTUAL_OUTPUT_ADD, "VirtualOutputAdd") \
+ 	X(VIRTUAL_OUTPUT_REMOVE, "VirtualOutputRemove") \
++	X(NESTED_OUTPUT_ADD, "NestedOutputAdd") \
+ 	X(AUTO_PLACE, "AutoPlace") \
+ 	X(TOGGLE_TEARING, "ToggleTearing") \
+ 	X(SHADE, "Shade") \
+@@ -1513,6 +1514,9 @@ run_action(struct view *view, struct action *action,
+ 		output_virtual_remove(output_name);
+ 		break;
+ 	}
++	case ACTION_TYPE_NESTED_OUTPUT_ADD:
++		output_nested_add();
++		break;
+ 	case ACTION_TYPE_AUTO_PLACE:
+ 		if (view) {
+ 			enum lab_placement_policy policy =
+diff --git a/src/output.c b/src/output.c
+index 889b3a5b..8d691303 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -12,6 +12,7 @@
+ #include <drm_fourcc.h>
+ #include <glib.h>
+ #include <strings.h>
++#include <wlr/backend/multi.h>
+ #include <wlr/backend/wayland.h>
+ #include <wlr/config.h>
+ #include <wlr/types/wlr_cursor.h>
+@@ -1304,6 +1305,34 @@ output_update_all_usable_areas(bool layout_changed)
+ 	}
+ }
+ 
++static void
++get_wl_backend(struct wlr_backend *backend, void *data)
++{
++	if (wlr_backend_is_wl(backend)) {
++		struct wlr_backend **wl = data;
++		*wl = backend;
++	}
++}
++
++void
++output_nested_add(void)
++{
++	struct wlr_backend *wl_backend = NULL;
++	if (wlr_backend_is_multi(server.backend)) {
++		wlr_multi_for_each_backend(server.backend, get_wl_backend,
++			&wl_backend);
++	} else if (wlr_backend_is_wl(server.backend)) {
++		wl_backend = server.backend;
++	}
++	if (!wl_backend) {
++		wlr_log(WLR_ERROR, "cannot add a nested output: not running nested");
++		return;
++	}
++	if (!wlr_wl_output_create(wl_backend)) {
++		wlr_log(WLR_ERROR, "failed to create a nested output");
++	}
++}
++
+ struct wlr_box
+ output_usable_area_in_layout_coords(struct output *output)
+ {

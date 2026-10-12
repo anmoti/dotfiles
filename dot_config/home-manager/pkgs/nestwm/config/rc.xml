@@ -4,7 +4,14 @@
   <theme>
     <!-- catppuccin/openbox, installed via home-manager -->
     <name>catppuccin-mocha</name>
+    <dropShadows>yes</dropShadows>
     <!-- Only the titlebar's top corners can be rounded, so keep them square -->
     <cornerRadius>0</cornerRadius>
   </theme>
+  <keyboard>
+    <default />
+    <!-- Send the active window to the next monitor (see Add Monitor) -->
+    <keybind key="A-S-Left"><action name="MoveToOutput" direction="left" /></keybind>
+    <keybind key="A-S-Right"><action name="MoveToOutput" direction="right" /></keybind>
+  </keyboard>
 </labwc_config>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!-- labwc's default root menu plus NestedOutputAdd; see labwc-menu(5) -->
+<openbox_menu>
+  <menu id="root-menu">
+    <item label="Terminal">
+      <action name="Execute" command="lab-sensible-terminal" />
+    </item>
+    <item label="Add Monitor">
+      <!-- Another window in the host, e.g. to fullscreen on a physical monitor -->
+      <action name="NestedOutputAdd" />
+    </item>
+    <item label="Reconfigure">
+      <action name="Reconfigure" />
+    </item>
+    <item label="Exit">
+      <action name="Exit" />
+    </item>
+  </menu>
+</openbox_menu>
