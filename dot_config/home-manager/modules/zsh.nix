@@ -11,10 +11,6 @@
     pkgs.local.proto
   ];
 
-  systemd.user.sessionVariables = {
-    SHELL = "${pkgs.zsh}/bin/zsh";
-  };
-
   home.sessionVariables = {
     PROTO_HOME = "${config.xdg.dataHome}/proto";
     RUSTUP_HOME = "${config.xdg.dataHome}/rustup";
