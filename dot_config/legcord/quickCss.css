@@ -1,0 +1,145 @@
+/*
+.name__91a9d {
+  flex-shrink: 1;
+}
+
+.vc-member-list-decorators-wrapper {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.botTagRegular__82f07 {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.botText__82f07 {
+  overflow-inline: hidden;
+  min-width: 0;
+}
+
+.memberInner__5d473 {
+  padding-right: 8px !important;
+}
+*/
+
+
+/* ネームプレート */
+.childContainer__91a9d.nameplated__91a9d {
+  padding-inline-end: 8px;
+}
+
+
+/* Disable Gift Nitro Button */
+.container_c0c49a {
+  display: none;
+}
+
+/* Disable Stamp Picker Button */
+.expression-picker-chat-input-button:has(.stickerButton__74017) {
+  display: none;
+}
+
+/* Disable GIF Picker Button */
+.expression-picker-chat-input-button:has(div[aria-label="GIFピッカーを開く"]) {
+    display: none;
+}
+
+
+.visual-refresh.theme-dark, .visual-refresh .theme-dark, .visual-refresh.theme-dark ::after {
+  --__header-bar-background: transparent !important; /* #181825 */
+  --background-scrim: transparent;
+}
+
+body, .appMount__51fd7 {
+  background: none;
+}
+
+.visual-refresh.theme-dark .app_a3002d * {
+  --background-base-lowest: transparent !important; /* #11111b */
+  --app-frame-border: rgb(49, 50, 68);
+}
+
+/* Title bar */
+.title_c38106 {
+  background-color: rgb(17 17 27 / 85%);
+}
+
+/* Side bar (Server list, Channel list) */
+.sidebar__5e434 {
+  background-color: rgb(17 17 27 /85%);
+}
+
+.sidebarListRounded__5e434 {
+  backdrop-filter: unset;
+}
+
+/* Server list unread mentions bar */
+.mention__3b95d {
+  border: none;
+  box-shadow: 0 0 6px rgb(24, 24, 37);
+}
+
+/* Channel list unread mentions bar */
+.bar__7aaec {
+  margin: 6px;
+  border: none;
+  box-shadow: 0 0 6px rgb(24, 24, 37);
+}
+
+/* Channel Unread number badge (Plugin) */
+.numberBadge__2b1f5 {
+  color: rgb(17 17 27)
+}
+
+/* Channel header bar */
+.themed__9293f {
+  background-color: rgb(24 24 37 / 85%) !important;
+}
+
+
+/* Date divider */
+.divider__908e2 {
+  border: none;
+}
+
+.divider__908e2::before, .divider__908e2::after {
+  content: "";
+  flex-grow: 1;
+  border-top: thin solid var(--border-subtle);
+}
+
+.isUnread__908e2::before, .isUnread__908e2::after {
+  border-color: var(--divider-color)
+}
+
+/* Main Content (Messages and Members list)  */
+.content_f75fb0 {
+  --background-base-lower: transparent !important; /* #181825 */
+  background-color: rgb(24 24 37 / 85%);
+}
+
+/* Members list */
+.container_c8ffbb, .members_c8ffbb {
+  background: none;
+}
+
+/* Members list member */
+.member_c8ffbb {
+  background: none;
+}
+
+/* Friend tab */
+.tabBody__133bf {
+  --background-base-lower: transparent !important; /* #181825 */
+  background: rgb(24 24 37 / 85%);
+}
+
+/* Modal */
+.container__8a031 {
+  box-shadow: 
+    0 0 0 1px #313244,
+    0 10px 40px rgb(17 17 27 / 70%),
+    0 20px 60px rgb(17 17 27 / 50%);
+}
+
