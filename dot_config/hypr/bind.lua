@@ -67,6 +67,9 @@ do
 
   hl.bind(MOD_ "L", hl.dsp.exec_cmd(apps.lock))
 
+  -- 1Password has no global shortcut on Wayland, so launch Quick Access from here
+  hl.bind(MODS "SPACE", hl.dsp.exec_cmd("1password --quick-access"))
+
   hl.bind(MODS "C", hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex"))
   hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot_satty.sh"))
 
