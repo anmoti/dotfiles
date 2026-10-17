@@ -51,7 +51,6 @@ vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'ModeChanged' }, {
     local winline_diff = last_winline - curr_winline
 
     if is_target_transition and winline_diff ~= 0 then
-      vim.print(string.format("Mode changed from '%s' %d to '%s' %d", last_mode, last_winline, curr_mode, curr_winline))
       local view = vim.fn.winsaveview()
       view.topline = view.topline + winline_diff
       vim.fn.winrestview(view)
