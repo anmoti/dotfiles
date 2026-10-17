@@ -21,8 +21,8 @@ local apps = {
     match = { class = "steam" },
   },
   {
-    name = "youtube-music",
-    match = { class = "com.github.th_ch.youtube_music" },
+    name = "pear-desktop",
+    match = { class = "com.github.th-ch.youtube-music" },
     monitor = laptop_monitor,
   },
   {
