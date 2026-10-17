@@ -21,7 +21,9 @@
 
   programs.opencode = {
     enable = true;
-    package = pkgs.llm-agents.opencode;
+    package = pkgs.llm-agents.opencode2;
     enableMcpIntegration = true;
   };
+
+  home.shellAliases.opencode = "opencode2";
 }
