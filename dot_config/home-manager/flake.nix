@@ -119,6 +119,15 @@
         ];
       };
 
+      homeConfigurations."anmoti@legion5-arch" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = { inherit agent; };
+        modules = [
+          ./home.nix
+          ./profiles/desktop.nix
+        ];
+      };
+
       homeConfigurations."anmoti@thinkpad-1" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit agent; };
