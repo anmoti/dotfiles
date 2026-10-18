@@ -14,6 +14,11 @@
 
     mcp-servers.url = "github:natsukium/mcp-servers-nix";
 
+    agent-skills = {
+      url = "github:Kyure-A/agent-skills-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     mcp-hub = {
       url = "github:ravitemer/mcp-hub";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -28,6 +33,7 @@
       home-manager,
       llm-agents,
       mcp-servers,
+      agent-skills,
       mcp-hub,
       ...
     }:
@@ -75,6 +81,11 @@
         ];
       };
 
+      agent = {
+        skills = agent-skills;
+        mcps = mcp-servers;
+      };
+
       findNixFiles =
         dir:
         pkgs.lib.pipe (builtins.readDir dir) [
@@ -89,19 +100,19 @@
 
       homeConfigurations.lsp = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit mcp-servers; };
+        extraSpecialArgs = { inherit agent; };
         modules = [ ./home.nix ] ++ (findNixFiles ./profiles);
       };
 
       homeConfigurations."anmoti" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit mcp-servers; };
+        extraSpecialArgs = { inherit agent; };
         modules = [ ./home.nix ];
       };
 
       homeConfigurations."anmoti@LEGION5" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit mcp-servers; };
+        extraSpecialArgs = { inherit agent; };
         modules = [
           ./home.nix
           ./profiles/desktop.nix
@@ -110,7 +121,7 @@
 
       homeConfigurations."anmoti@thinkpad-1" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit mcp-servers; };
+        extraSpecialArgs = { inherit agent; };
         modules = [
           ./home.nix
           ./profiles/desktop.nix
