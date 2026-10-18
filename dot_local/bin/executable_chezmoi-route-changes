@@ -1,0 +1,54 @@
+#!/bin/bash
+# chezmoi [hooks.add.post] / [hooks.re-add.post]:
+# move what chezmoi just wrote into the source dir (local-applied) to feature worktrees
+# with fzf, then rebuild local-applied.
+set -euo pipefail
+
+# hooks run on --dry-run too
+case " ${CHEZMOI_ARGS:-} " in *" --dry-run "* | *" -n "*) exit 0 ;; esac
+
+# not `chezmoi source-path`: the parent chezmoi holds the state lock while hooks run
+source_dir=${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}
+root=$(git -C "$source_dir" rev-parse --show-toplevel)
+
+changed() {
+  { git -C "$root" diff --name-only; git -C "$root" ls-files -o --exclude-standard; } | sort -u
+}
+
+move() {
+  local wt=$1 files=$2 f tracked=()
+  while IFS= read -r f; do
+    if git -C "$root" ls-files --error-unmatch -- "$f" &>/dev/null; then
+      tracked+=("$f")
+    elif [ -e "$wt/$f" ]; then
+      echo "route: skip $f (already exists in $wt)" >&2
+    else
+      mkdir -p "$wt/$(dirname "$f")"
+      mv "$root/$f" "$wt/$f"
+    fi
+  done <<<"$files"
+
+  [ ${#tracked[@]} -gt 0 ] || return 0
+  # shortcut: plain apply fails if the target worktree changed the same lines, when that bites try `git apply --3way`
+  if git -C "$root" diff --binary -- "${tracked[@]}" | git -C "$wt" apply --binary; then
+    git -C "$root" checkout -- "${tracked[@]}"
+  else
+    echo "route: could not apply to $wt; kept in $root" >&2
+  fi
+}
+
+while [ -n "$(changed)" ]; do
+  files=$(changed | fzf --multi --prompt='files> ' \
+    --header='Tab: select / Enter: choose worktree / Esc: stop') || break
+  [ -n "$files" ] || break
+  wt=$(git -C "$root" worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}' |
+    grep -vxF "$root" | fzf --prompt='move to> ' --header='Esc: back to file selection') || continue
+  move "$wt" "$files"
+done
+
+if [ -n "$(changed)" ]; then
+  echo "route: changes remain in $root; local-applied is not rebuilt" >&2
+  exit 0
+fi
+
+"$(dirname "$0")/chezmoi-sync-worktrees" "$root"

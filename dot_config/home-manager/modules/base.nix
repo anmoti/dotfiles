@@ -19,6 +19,7 @@
     # CLI Deps
     doppler # chezmoi
     gh # dot_gitconfig
+    fzf # chezmoi-route-changes
 
     # CLI Apps
     unstable.chezmoi

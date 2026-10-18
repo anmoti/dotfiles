@@ -1,0 +1,47 @@
+#!/bin/bash
+# Rebuild local-applied: main + every other worktree (uncommitted and untracked files included).
+# usage: chezmoi-sync-worktrees [source-dir]
+set -euo pipefail
+
+# hooks run on --dry-run too, but this rewrites the source dir
+case " ${CHEZMOI_ARGS:-} " in *" --dry-run "* | *" -n "*) exit 0 ;; esac
+
+# not `chezmoi source-path`: the parent chezmoi holds the state lock while hooks run
+source_dir=${1:-${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}}
+root=$(git -C "$source_dir" rev-parse --show-toplevel)
+branch=local-applied
+# merge commits and snapshots must not trigger the 1Password signing prompt
+nosign=(git -c commit.gpgsign=false)
+
+if [ -n "$(git -C "$root" status --porcelain)" ]; then
+  echo "sync: $root has uncommitted changes; move them to a worktree first" >&2
+  exit 1
+fi
+
+# Commit object of the worktree state without touching its index or working tree
+# (git stash create skips untracked files, so use a temporary index instead).
+snapshot() {
+  local wt=$1 idx
+  idx=$(mktemp -u)
+  GIT_INDEX_FILE=$idx git -C "$wt" read-tree HEAD
+  GIT_INDEX_FILE=$idx git -C "$wt" add -A
+  "${nosign[@]}" -C "$wt" commit-tree "$(GIT_INDEX_FILE=$idx git -C "$wt" write-tree)" -p HEAD -m "snapshot of $wt"
+  rm -f "$idx"
+}
+
+old=$(git -C "$root" rev-parse --verify -q "$branch" || true)
+git -C "$root" switch -C "$branch" main --quiet
+
+while IFS= read -r wt; do
+  [ "$wt" = "$root" ] || [ ! -d "$wt" ] && continue
+  # only these branches are overlaid; name a branch e.g. wip/* to keep it out
+  case $(git -C "$wt" branch --show-current) in main | feat/*) ;; *) continue ;; esac
+  if ! "${nosign[@]}" -C "$root" merge --no-edit --quiet "$(snapshot "$wt")"; then
+    git -C "$root" merge --abort
+    [ -n "$old" ] && git -C "$root" reset --hard --quiet "$old"
+    echo "sync: conflict while merging $wt; $branch is left as before" >&2
+    exit 1
+  fi
+done < <(git -C "$root" worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}')
+
+echo "sync: $branch rebuilt"

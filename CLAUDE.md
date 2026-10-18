@@ -44,6 +44,46 @@ hm list
 chezmoi does **not** delete files from the home directory when they are removed from the source repository.
 When a file is removed from chezmoi source, always ask the user to manually delete the corresponding file from their home directory.
 
+## Worktree Overlay (`local-applied`)
+
+Experimental changes are kept out of `main` by developing each feature in its own git worktree.
+The chezmoi source dir (`~/.local/share/chezmoi`) is **not** a place to edit or commit:
+it is checked out on the throwaway branch `local-applied`, rebuilt from the worktrees.
+
+```
+~/.local/share/chezmoi                          local-applied  (applied by chezmoi; rebuilt automatically)
+~/wip/git/github.com/anmoti/dotfiles            main           (clean area: commits that go upstream)
+~/wip/git/github.com/anmoti/dotfiles-feat-<x>   feat/<x>       (one worktree per feature; uncommitted is fine)
+```
+
+- `chezmoi-sync-worktrees` (hook `apply.pre`) recreates `local-applied` from `main`, then merges a snapshot of every
+  `main` and `feat/*` worktree (HEAD + uncommitted + untracked, taken via a temporary index, so worktrees are untouched).
+  Branches with other prefixes (e.g. `wip/*`) are left out. A merge conflict aborts the sync and fails `chezmoi apply`.
+  It refuses to run if the source dir has uncommitted changes.
+- `chezmoi-route-changes` (hooks `add.post` / `re-add.post`) takes what `chezmoi add` / `re-add` just wrote into the source dir
+  and moves it, chosen with fzf, to a worktree (multi-select files, then the target worktree; repeat; Esc to stop),
+  then rebuilds `local-applied`. Leftovers keep the source dir dirty, so the rebuild is skipped.
+  Changes from `hm update` go to the `main` worktree.
+- Hooks live in `~/.config/chezmoi/chezmoi.toml`, which is machine-local and **not** managed by this repo:
+
+```toml
+[hooks.apply.pre]
+script = "/home/anmoti/.local/bin/chezmoi-sync-worktrees"
+
+[hooks.add.post]
+script = "/home/anmoti/.local/bin/chezmoi-route-changes"
+
+[hooks.re-add.post]
+script = "/home/anmoti/.local/bin/chezmoi-route-changes"
+```
+
+Rules for agents:
+
+- Make changes in the `main` or `feat/*` worktree, never in `~/.local/share/chezmoi`. Uncommitted changes in other worktrees are intentional; do not commit them.
+- Never push `local-applied`.
+- Hooks must not call `chezmoi` (e.g. `chezmoi source-path`): the parent process holds the state lock. Use `$CHEZMOI_SOURCE_DIR`.
+- Two worktrees editing the same place conflict on sync. Keep list insertions (e.g. `home.packages`) apart from each other.
+
 ## chezmoi File Naming Conventions
 
 - `dot_` prefix → `.` in home directory (e.g., `dot_config/` → `~/.config/`)
@@ -71,7 +111,7 @@ dot_config/
   oh-my-posh/          # Shell prompt theme
   satty/               # Screenshot annotation
   udev/                # udev rules (must be manually copied to /etc/udev/rules.d/ as root)
-dot_local/bin/         # Custom scripts placed in PATH (hm, term, …)
+dot_local/bin/         # Custom scripts placed in PATH (hm, term, chezmoi-sync-worktrees, …)
 dot_gitconfig.tmpl     # Git config (template for 1Password SSH signing)
 dot_wakatime.cfg.tmpl  # WakaTime config (template)
 dot_editorconfig       # EditorConfig
