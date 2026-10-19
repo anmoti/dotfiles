@@ -120,7 +120,7 @@ chezmoi apply
 # 新しい機能を始める
 git -C ~/wip/git/github.com/anmoti/dotfiles worktree add -b feat/<名前> ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> main
 
-# 合成から外したいときはブランチ名を feat/ 以外 (例: wip/<名前>) にする
+# feat/ 以外 (chore/ など) も合成される。外したいときはブランチ名を wip/<名前> にする
 ```
 
 `chezmoi add` / `re-add` の後は、fzf で差分を移す worktree を選ぶ (Esc で中断)。
@@ -178,7 +178,7 @@ HandleLidSwitchDocked=ignore
 | `term_alacritty` | Alacritty 起動 |
 | `change-brightness` | ddcutil + brightnessctl で輝度を統合制御 |
 | `hm` | Home Manager ラッパー (`list` / `update`) |
-| `chezmoi-sync-worktrees` | `main` と `feat/*` の worktree を `local-applied` に合成 (`apply` の pre hook) |
+| `chezmoi-sync-worktrees` | `wip/*` 以外の全 worktree を `local-applied` に合成 (`apply` の pre hook) |
 | `chezmoi-route-changes` | `add` / `re-add` した差分を fzf で選んだ worktree へ移す (post hook) |
 
 ## Resources

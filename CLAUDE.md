@@ -57,8 +57,8 @@ it is checked out on the throwaway branch `local-applied`, rebuilt from the work
 ```
 
 - `chezmoi-sync-worktrees` (hook `apply.pre`) recreates `local-applied` from `main`, then merges a snapshot of every
-  `main` and `feat/*` worktree (HEAD + uncommitted + untracked, taken via a temporary index, so worktrees are untouched).
-  Branches with other prefixes (e.g. `wip/*`) are left out. A merge conflict aborts the sync and fails `chezmoi apply`.
+  worktree except `wip/*` and detached HEADs (HEAD + uncommitted + untracked, taken via a temporary index, so worktrees are untouched).
+  Branches named `wip/*` are left out; any other prefix (`feat/*`, `chore/*`, …) is overlaid. A merge conflict aborts the sync and fails `chezmoi apply`.
   It refuses to run if the source dir has uncommitted changes.
 - `chezmoi-route-changes` (hooks `add.post` / `re-add.post`) takes what `chezmoi add` / `re-add` just wrote into the source dir
   and moves it, chosen with fzf, to a worktree (multi-select files, then the target worktree; repeat; Esc to stop),
@@ -79,7 +79,12 @@ script = "/home/anmoti/.local/bin/chezmoi-route-changes"
 
 Rules for agents:
 
-- Make changes in the `main` or `feat/*` worktree, never in `~/.local/share/chezmoi`. Uncommitted changes in other worktrees are intentional; do not commit them.
+- Worktrees keep parallel pieces of work from getting mixed up: one worktree per change (`feat/*`, `chore/*`, …).
+  Make changes in such a worktree (create one if none fits), never in `~/.local/share/chezmoi`.
+  The `main` worktree is the user's own: they touch it by hand (e.g. `hm update`) and commit what goes upstream.
+  Do not edit there unless the user explicitly says so.
+  If it is unclear which worktree a change belongs to, ask before editing.
+  Uncommitted changes in other worktrees are intentional; do not commit them.
 - Never push `local-applied`.
 - Hooks must not call `chezmoi` (e.g. `chezmoi source-path`): the parent process holds the state lock. Use `$CHEZMOI_SOURCE_DIR`.
 - Two worktrees editing the same place conflict on sync. Keep list insertions (e.g. `home.packages`) apart from each other.

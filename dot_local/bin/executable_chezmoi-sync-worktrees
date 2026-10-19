@@ -34,8 +34,8 @@ git -C "$root" switch -C "$branch" main --quiet
 
 while IFS= read -r wt; do
   [ "$wt" = "$root" ] || [ ! -d "$wt" ] && continue
-  # only these branches are overlaid; name a branch e.g. wip/* to keep it out
-  case $(git -C "$wt" branch --show-current) in main | feat/*) ;; *) continue ;; esac
+  # every branch is overlaid except wip/* (and detached HEADs); name a branch wip/* to keep it out
+  case $(git -C "$wt" branch --show-current) in wip/* | "") continue ;; esac
   if ! "${nosign[@]}" -C "$root" merge --no-edit --quiet "$(snapshot "$wt")"; then
     git -C "$root" merge --abort
     [ -n "$old" ] && git -C "$root" reset --hard --quiet "$old"
