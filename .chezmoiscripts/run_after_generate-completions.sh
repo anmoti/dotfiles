@@ -8,3 +8,7 @@ mkdir -p "$COMP_DIR"
 if command -v pnpm >/dev/null 2>&1; then
   proto run pnpm --config-mode global -- completion zsh > "$COMP_DIR/_pnpm"
 fi
+
+if command -v uv >/dev/null 2>&1; then
+  proto run uv --config-mode global -- generate-shell-completion zsh > "$COMP_DIR/_uv"
+fi
