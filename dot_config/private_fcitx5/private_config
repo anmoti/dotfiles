@@ -1,13 +1,13 @@
 [Hotkey]
-# トグルキーの修飾キーを押し続けたときは列挙
+# Enumerate when holding modifier of Toggle key
 EnumerateWithTriggerKeys=True
-# 次の入力メソッドに切り替える
+# Enumerate Input Method Forward
 EnumerateForwardKeys=
-# 前の入力メソッドに切り替える
+# Enumerate Input Method Backward
 EnumerateBackwardKeys=
-# 切り替え時は第1入力メソッドをスキップする
+# Skip first input method while enumerating
 EnumerateSkipFirst=False
-# 修飾キーのショートカットをトリガーするための時間制限（ミリ秒）
+# Time limit in milliseconds for triggering modifier key shortcuts
 ModifierOnlyKeyTimeout=250
 
 [Hotkey/TriggerKeys]
@@ -44,27 +44,27 @@ ModifierOnlyKeyTimeout=250
 0=Control+Alt+P
 
 [Behavior]
-# 入力メソッドをデフォルトで有効にする
-ActiveByDefault=False
-# フォーカス時に状態をリセット
+# Active By Default
+ActiveByDefault=True
+# Reset state on Focus In
 resetStateWhenFocusIn=No
-# 入力状態を共有する
+# Share Input State
 ShareInputState=No
-# アプリケーションにプリエディットを表示する
+# Show preedit in application
 PreeditEnabledByDefault=True
-# 入力メソッドを切り替える際に入力メソッドの情報を表示する
+# Show Input Method Information when switch input method
 ShowInputMethodInformation=True
-# フォーカスを変更する際に入力メソッドの情報を表示する
+# Show Input Method Information when changing focus
 showInputMethodInformationWhenFocusIn=False
-# 入力メソッドの情報をコンパクトに表示する
+# Show compact input method information
 CompactInputMethodInformation=True
-# 第1入力メソッドの情報を表示する
+# Show first input method information
 ShowFirstInputMethodInformation=True
-# ページあたりのデフォルトの候補数
+# Default page size
 DefaultPageSize=5
-# XKB オプションの上書き
+# Override XKB Option
 OverrideXkbOption=False
-# カスタム XKB オプション
+# Custom XKB Option
 CustomXkbOption=
 # Force Enabled Addons
 EnabledAddons=
@@ -72,10 +72,10 @@ EnabledAddons=
 DisabledAddons=
 # Preload input method to be used by default
 PreloadInputMethod=True
-# パスワード欄に入力メソッドを許可する
+# Allow input method in the password field
 AllowInputMethodForPassword=False
-# パスワード入力時にプリエディットテキストを表示する
+# Show preedit text when typing password
 ShowPreeditForPassword=False
-# ユーザーデータを保存する間隔（分）
+# Interval of saving user data in minutes
 AutoSavePeriod=30
 

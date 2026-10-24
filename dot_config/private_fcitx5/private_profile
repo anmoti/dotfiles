@@ -1,6 +1,6 @@
 [Groups/0]
 # Group Name
-Name=デフォルト
+Name=default
 # Layout
 Default Layout=jp
 # Default Input Method
@@ -8,10 +8,16 @@ DefaultIM=skk
 
 [Groups/0/Items/0]
 # Name
+Name=keyboard-jp
+# Layout
+Layout=
+
+[Groups/0/Items/1]
+# Name
 Name=skk
 # Layout
 Layout=
 
 [GroupOrder]
-0=デフォルト
+0=default
 
