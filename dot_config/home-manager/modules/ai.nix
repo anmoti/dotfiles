@@ -36,6 +36,7 @@
     skills = {
       enable = with pkgs.agentSkills; [
         local
+        yomiyasu
       ];
 
       # Claude Code only discovers skills/<name>/SKILL.md.
