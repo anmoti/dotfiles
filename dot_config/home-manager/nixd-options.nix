@@ -2,7 +2,8 @@ let
   # nixf falsely reports `getFlake` as an unknown builtin (nix-community/nixd#762);
   # the dynamic attr avoids it. Switch back to `builtins.getFlake` once fixed.
   flake = builtins.${"getFlake"} "path:${toString ./.}";
-  nixpkgs = flake.inputs.nixpkgs.legacyPackages.x86_64-linux;
+  # The flake's own pkgs (with overlays), so `pkgs.unstable.` / `pkgs.agentSkills.` etc. complete too.
+  nixpkgs = flake.homeConfigurations.lsp.pkgs;
   hm = flake.homeConfigurations.lsp.options;
   mcp = (flake.inputs.mcp-servers.lib.evalModule nixpkgs { }).options;
 in
