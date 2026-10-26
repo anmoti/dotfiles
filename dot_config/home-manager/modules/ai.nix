@@ -22,6 +22,8 @@
     playwright.enable = true;
     context7 = {
       enable = true;
+      # nixos-26.05 の pnpm_10 が insecure 扱いのため、mcp-servers-nix が自前の nixpkgs でビルドしたものを使う
+      package = pkgs.mcp-servers.context7-mcp;
       passwordCommand = ''echo "TEST_KEY"'';
     };
   };

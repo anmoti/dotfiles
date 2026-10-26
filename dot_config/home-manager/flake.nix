@@ -56,6 +56,7 @@
               config = prev.config;
             };
             llm-agents = llm-agents.packages.${system};
+            mcp-servers = mcp-servers.packages.${system};
             mcp-hub = mcp-hub.packages.${system};
             local = {
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
