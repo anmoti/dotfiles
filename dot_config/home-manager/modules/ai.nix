@@ -1,20 +1,10 @@
-{ config, pkgs, agent, ... }:
+{ pkgs, agent, ... }:
 
 {
   imports = [
     agent.mcps.homeManagerModules.default
     agent.skills.homeManagerModules.default
   ];
-
-  programs.agent-skills = {
-    enable = true;
-    targets = {
-      claude.enable = config.programs.claude-code.enable;
-      opencode.enable = config.programs.opencode.enable;
-    };
-    sources.local.path = ../skills;
-    skills.enableAll = [ "local" ];
-  };
 
   programs.mcp.enable = true;
 
@@ -38,6 +28,19 @@
     enable = true;
     package = pkgs.llm-agents.opencode2;
     enableMcpIntegration = true;
+  };
+
+  programs.agent-skills = {
+    enable = true;
+    sources = pkgs.agentSkills;
+    skills = {
+      enable = with pkgs.agentSkills; [
+        local
+      ];
+
+      # Claude Code only discovers skills/<name>/SKILL.md.
+      flatten = true;
+    };
   };
 
   home.shellAliases.opencode = "opencode2";

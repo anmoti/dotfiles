@@ -35,6 +35,9 @@ home-manager switch
 # Update flake inputs and optionally sync flake.lock back into chezmoi
 hm update
 
+# Update skill sources and optionally sync sources.lock.json back into chezmoi
+hm skills
+
 # List installed packages with versions and sizes
 hm list
 ```

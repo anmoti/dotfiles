@@ -7,15 +7,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1791801176,
-        "narHash": "sha256-7yMjYQUjpCy0IhItfGt2EJbOobNu1pkIrBX2GA3yOcU=",
-        "owner": "Kyure-A",
+        "lastModified": 1793035838,
+        "narHash": "sha256-WieITNSGrQ6YhrhimoNOiKqpefq9XI14NYq675aZMvk=",
+        "owner": "anmoti",
         "repo": "agent-skills-nix",
-        "rev": "2948865044b2af55c8c4e4eb2abda7de79d60f0e",
+        "rev": "d05a7c3ce83ec833a0133d54975556984af6468f",
         "type": "github"
       },
       "original": {
-        "owner": "Kyure-A",
+        "owner": "anmoti",
         "repo": "agent-skills-nix",
         "type": "github"
       }

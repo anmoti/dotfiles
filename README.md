@@ -94,6 +94,9 @@ oh-my-posh
 # フレーク更新 + chezmoi への反映
 hm update
 
+# スキル取得元の更新 + chezmoi への反映
+hm skills
+
 # インストール済みパッケージ一覧
 hm list
 ```
