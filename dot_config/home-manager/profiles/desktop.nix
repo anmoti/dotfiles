@@ -15,11 +15,11 @@
 
       nwg-drawer # waybar
       kdePackages.qtdeclarative # qmlls QML modules (QtQuick etc.)
-    ])
-    ++ [
-      pkgs.local.catppuccin-openbox
+
+      pkgs.local.catppuccin-openbox # nestwm theme
       pkgs.local.nestwm
-    ]
+      jq # nestwm-menu
+    ])
     ++ pkgs.local.wallpapers;
 
   home.pointerCursor = {
