@@ -1,0 +1,18 @@
+{
+  "pins": {
+    "yomiyasu": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nanaism",
+        "repo": "yomiyasu"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "41e5aec228f080fe24e5f795efee2ac3fda61839",
+      "url": "https://github.com/nanaism/yomiyasu/archive/41e5aec228f080fe24e5f795efee2ac3fda61839.tar.gz",
+      "hash": "sha256-oux/b3Xn0UCfBZuCrzs7pKnXeZwS4jsU3vblsCPQAh0="
+    }
+  },
+  "version": 8
+}

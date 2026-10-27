@@ -27,12 +27,12 @@ case "$1" in
     ;;
 
   skills)
-    (cd "$HOME_MANAGER_DIR" && nix run .#skills-sources-lock)
-    echo -n "Do you want 'chezmoi re-add registries/skills/sources.lock.json'? [Y/n] "
+    npins -d "$HOME_MANAGER_DIR/modules/ai/npins" update
+    echo -n "Do you want 'chezmoi re-add modules/ai/npins/sources.json'? [Y/n] "
     read -r res
 
     if [[ -z "$res" || "$res" =~ ^[yY]$ ]]; then
-      chezmoi re-add "$HOME_MANAGER_DIR/registries/skills/sources.lock.json"
+      chezmoi re-add "$HOME_MANAGER_DIR/modules/ai/npins/sources.json"
     fi
     ;;
 

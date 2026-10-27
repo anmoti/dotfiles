@@ -1,25 +1,5 @@
 {
   "nodes": {
-    "agent-skills": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1793035838,
-        "narHash": "sha256-WieITNSGrQ6YhrhimoNOiKqpefq9XI14NYq675aZMvk=",
-        "owner": "anmoti",
-        "repo": "agent-skills-nix",
-        "rev": "d05a7c3ce83ec833a0133d54975556984af6468f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anmoti",
-        "repo": "agent-skills-nix",
-        "type": "github"
-      }
-    },
     "bun2nix": {
       "inputs": {
         "flake-parts": [
@@ -225,7 +205,6 @@
     },
     "root": {
       "inputs": {
-        "agent-skills": "agent-skills",
         "flake-parts": [
           "llm-agents",
           "flake-parts"

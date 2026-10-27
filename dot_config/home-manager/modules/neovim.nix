@@ -7,7 +7,7 @@
 
 {
   imports = [
-    ../modules/ai.nix
+    ../modules/ai
   ];
 
   programs.neovim = {

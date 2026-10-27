@@ -14,12 +14,6 @@
 
     mcp-servers.url = "github:natsukium/mcp-servers-nix";
 
-    # Fork of Kyure-A/agent-skills-nix (selector tree, flatten, exclude, HM target linkage).
-    agent-skills = {
-      url = "github:anmoti/agent-skills-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     mcp-hub = {
       url = "github:ravitemer/mcp-hub";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,7 +28,6 @@
       home-manager,
       llm-agents,
       mcp-servers,
-      agent-skills,
       mcp-hub,
       ...
     }:
@@ -59,16 +52,6 @@
             llm-agents = llm-agents.packages.${system};
             mcp-servers = mcp-servers.packages.${system};
             mcp-hub = mcp-hub.packages.${system};
-            # Under pkgs so that nixd (which only completes from pkgs/lib) can complete skill names.
-            agentSkills = agent.skillsLib.sourcesFromLock {
-              manifestsDir = ./registries/skills/sources;
-              lockFile = ./registries/skills/sources.lock.json;
-            } // {
-              local = agent.skillsLib.mkSourceTree "local" {
-                path = ./registries/skills/local;
-                filter.maxDepth = 1;
-              };
-            };
             local = {
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
@@ -94,19 +77,7 @@
       };
 
       agent = {
-        skills = agent-skills;
-        skillsLib = agent-skills.lib.agent-skills;
         mcps = mcp-servers;
-      };
-
-      # Update registries/skills/sources.lock.json (`nix run .#skills-sources-lock` from dot_config/home-manager).
-      # npins comes from unstable: nixos-26.05's 0.4.2 writes lock version 7, but agent-skills-nix requires 8.
-      # These must be relative strings: the lock program writes to them, and a path literal resolves into the read-only store.
-      sourceLockProgram = agent.skillsLib.mkSourceLockProgram {
-        inherit pkgs;
-        npins = pkgs.unstable.npins;
-        manifestsDir = "registries/skills/sources";
-        lockFile = "registries/skills/sources.lock.json";
       };
 
       findNixFiles =
@@ -119,13 +90,6 @@
     in
     {
       formatter.${system} = pkgs.nixfmt-tree;
-
-      # Update registries/skills/sources.lock.json for the sources declared in registries/skills/sources.
-      # Run from dot_config/home-manager: nix run .#skills-sources-lock
-      apps.${system}.skills-sources-lock = {
-        type = "app";
-        program = "${sourceLockProgram}/bin/skills-sources-lock";
-      };
 
       packages.${system} = pkgs.lib.filterAttrs (_: pkgs.lib.isDerivation) pkgs.local;
 

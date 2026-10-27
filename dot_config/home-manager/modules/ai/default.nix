@@ -1,10 +1,15 @@
 { pkgs, agent, ... }:
 
+let
+  skills = import ./skills { inherit (pkgs) lib; };
+in
 {
   imports = [
     agent.mcps.homeManagerModules.default
-    agent.skills.homeManagerModules.default
   ];
+
+  # `hm skills` runs npins against modules/ai/npins.
+  home.packages = [ pkgs.npins ];
 
   programs.mcp.enable = true;
 
@@ -18,30 +23,18 @@
     };
   };
 
-  programs.agent-skills = {
-    enable = true;
-    sources = pkgs.agentSkills;
-    skills = {
-      enable = with pkgs.agentSkills; [
-        local
-        yomiyasu
-      ];
-
-      # Claude Code only discovers skills/<name>/SKILL.md.
-      flatten = true;
-    };
-  };
-
   programs.claude-code = {
     enable = true;
     package = pkgs.llm-agents.claude-code;
     enableMcpIntegration = true;
+    inherit skills;
   };
 
   programs.opencode = {
     enable = true;
     package = pkgs.llm-agents.opencode2;
     enableMcpIntegration = true;
+    inherit skills;
   };
 
   home.shellAliases.opencode = "opencode2";
