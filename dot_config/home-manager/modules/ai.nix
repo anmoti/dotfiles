@@ -18,18 +18,6 @@
     };
   };
 
-  programs.claude-code = {
-    enable = true;
-    package = pkgs.llm-agents.claude-code;
-    enableMcpIntegration = true;
-  };
-
-  programs.opencode = {
-    enable = true;
-    package = pkgs.llm-agents.opencode2;
-    enableMcpIntegration = true;
-  };
-
   programs.agent-skills = {
     enable = true;
     sources = pkgs.agentSkills;
@@ -42,6 +30,18 @@
       # Claude Code only discovers skills/<name>/SKILL.md.
       flatten = true;
     };
+  };
+
+  programs.claude-code = {
+    enable = true;
+    package = pkgs.llm-agents.claude-code;
+    enableMcpIntegration = true;
+  };
+
+  programs.opencode = {
+    enable = true;
+    package = pkgs.llm-agents.opencode2;
+    enableMcpIntegration = true;
   };
 
   home.shellAliases.opencode = "opencode2";
