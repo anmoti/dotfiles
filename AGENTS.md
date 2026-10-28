@@ -1,4 +1,4 @@
-# CLAUDE.md
+# Agent instruction for anmoti/dotfiles
 
 This file provides guidance when working with this repository.
 Keep this file (and README.md) up to date as the configuration evolves.
