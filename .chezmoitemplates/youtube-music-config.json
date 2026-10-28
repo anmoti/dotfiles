@@ -1,0 +1,78 @@
+{
+    "options": {
+        "alwaysOnTop": false,
+        "appVisible": true,
+        "autoResetAppCache": false,
+        "autoUpdates": false,
+        "disableHardwareAcceleration": false,
+        "hideMenu": false,
+        "hideMenuWarned": false,
+        "language": "ja",
+        "likeButtons": "",
+        "overrideUserAgent": false,
+        "proxy": "",
+        "removeUpgradeButton": false,
+        "restartOnConfigChanges": false,
+        "resumeOnStart": false,
+        "startAtLogin": false,
+        "startingPage": "",
+        "swapLikeButtonsOrder": false,
+        "themes": [],
+        "tray": true,
+        "trayClickPlayPause": false,
+        "usePodcastParticipantAsArtist": false
+    },
+    "plugins": {
+        "album-color-theme": {
+            "enableSeekbar": false,
+            "enabled": true,
+            "ratio": 0
+        },
+        "captions-selector": {
+            "enabled": true
+        },
+        "discord": {
+            "activityTimeoutEnabled": true,
+            "activityTimeoutTime": 600000,
+            "autoReconnect": true,
+            "enabled": true,
+            "hideDurationLeft": false,
+            "hideGitHubButton": true,
+            "listenAlong": true,
+            "playOnYouTubeMusic": true,
+            "statusDisplayType": 2
+        },
+        "do-not-track": {
+            "enabled": true
+        },
+        "exponential-volume": {
+            "enabled": true
+        },
+        "in-app-menu": {
+            "enabled": true,
+            "hideDOMWindowControls": true
+        },
+        "sponsorblock": {
+            "enabled": true
+        },
+        "synced-lyrics": {
+            "defaultTextString": "♪",
+            "enabled": true,
+            "lineEffect": "fancy",
+            "preciseTiming": true,
+            "preferredProvider": "YTMusic",
+            "romanization": true,
+            "showLyricsEvenIfInexact": true,
+            "showTimeCodes": true
+        },
+        "transparent-player": {
+            "enabled": true
+        },
+        "unobtrusive-player": {
+            "enabled": true
+        },
+        "video-toggle": {
+            "mode": "custom"
+        }
+    }
+}

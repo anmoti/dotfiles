@@ -1,0 +1,30 @@
+{{- $cur := dict -}}
+{{- if stat .chezmoi.targetFile -}}
+  {{- $cur = include .chezmoi.targetFile | fromJson -}}
+{{- end -}}
+
+{{- $want := includeTemplate "youtube-music-config.json" . | fromJson -}}
+
+{{- /* 実機が存在する場合は実機の plugins、新規環境ではテンプレートの plugins を使用 */ -}}
+{{- $sourcePlugins := $want.plugins -}}
+{{- if hasKey $cur "plugins" -}}
+  {{- $sourcePlugins = $cur.plugins -}}
+{{- end -}}
+
+{{- $cleanedPlugins := dict -}}
+{{- range $name, $cfg := $sourcePlugins -}}
+  {{- if kindIs "map" $cfg -}}
+    {{- /* 空のプラグインまたは enabled: false のプラグインは除外（アプリ側デフォルトが無効のため） */ -}}
+    {{- if or (empty $cfg) (and (hasKey $cfg "enabled") (eq (get $cfg "enabled") false)) -}}
+    {{- else -}}
+      {{- $_ := set $cleanedPlugins $name $cfg -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $_ := set $cleanedPlugins $name $cfg -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* 実機データに管理オプションと自動整形済み plugins をマージ */ -}}
+{{- $res := mergeOverwrite $cur $want -}}
+{{- $_ := set $res "plugins" $cleanedPlugins -}}
+{{- $res | toPrettyJson "\t" | trim -}}
