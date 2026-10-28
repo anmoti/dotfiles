@@ -1,0 +1,4 @@
+{{- $cur := dict -}}
+{{- if stat .chezmoi.targetFile }}{{ $cur = include .chezmoi.targetFile | fromJson }}{{ end -}}
+{{- $want := includeTemplate "1Password-settings.json" . | fromJson -}}
+{{- mergeOverwrite $cur $want | toPrettyJson "    " | trim -}}
