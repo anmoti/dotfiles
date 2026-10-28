@@ -37,5 +37,12 @@ in
     inherit skills;
   };
 
+  programs.antigravity-cli = {
+    enable = true;
+    package = pkgs.llm-agents.antigravity-cli;
+    enableMcpIntegration = true;
+    inherit skills;
+  };
+
   home.shellAliases.opencode = "opencode2";
 }
