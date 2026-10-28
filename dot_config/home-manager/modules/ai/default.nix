@@ -1,6 +1,7 @@
 { pkgs, agent, ... }:
 
 let
+  context = ./AGENTS.md;
   skills = import ./skills { inherit (pkgs) lib; };
 in
 {
@@ -27,20 +28,21 @@ in
     enable = true;
     package = pkgs.llm-agents.claude-code;
     enableMcpIntegration = true;
-    inherit skills;
+    inherit context skills;
   };
 
   programs.opencode = {
     enable = true;
     package = pkgs.llm-agents.opencode2;
     enableMcpIntegration = true;
-    inherit skills;
+    inherit context skills;
   };
 
   programs.antigravity-cli = {
     enable = true;
     package = pkgs.llm-agents.antigravity-cli;
     enableMcpIntegration = true;
+    context.AGENTS = context;
     inherit skills;
   };
 
