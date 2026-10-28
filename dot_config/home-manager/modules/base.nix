@@ -24,6 +24,7 @@
     # CLI Apps
     unstable.chezmoi
     docker-compose
+    ghq
     lazygit
     unstable.wakatime-cli
     opentofu
