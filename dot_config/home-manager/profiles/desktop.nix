@@ -8,6 +8,8 @@
 
   home.packages =
     (with pkgs; [
+      nemo
+
       wl-clipboard # satty
       brightnessctl # change-brightness
       ddcutil # change-brightness

@@ -52,6 +52,7 @@ fcitx5-skk
 ```
 1password
 nemo
+gvfs        # nemo のマウント機能に必要 (udisks2 連携)
 fuzzel
 nwg-drawer
 vivaldi
