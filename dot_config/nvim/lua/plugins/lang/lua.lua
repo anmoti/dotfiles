@@ -1,3 +1,14 @@
+local deps = {
+  bin = {
+    { "lua-language-server", nix = "lua-language-server" },
+    { "stylua", nix = "stylua" },
+  },
+}
+
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

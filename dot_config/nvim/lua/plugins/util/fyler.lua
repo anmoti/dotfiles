@@ -1,3 +1,5 @@
+local guard = require("utils.guard")
+
 return {
   {
     "FylerOrg/fyler.nvim",
@@ -17,7 +19,14 @@ return {
         },
       },
       extensions = {
-        git = { enabled = true },
+        git = {
+          enabled = guard.check({
+            bin = {
+              { "git", nix = "git" },
+              { "git-lfs", nix = "git-lfs" }, -- git status in LFS repos
+            },
+          }),
+        },
       },
       kind_presets = {
         floating = {

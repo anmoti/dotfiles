@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # home-manager directory hash: {{ output "sh" "-c" (printf "find %s/dot_config/home-manager -type f -print0 | xargs -0 sha256sum | sort | sha256sum" .chezmoi.sourceDir) }}
+# neovim-deps hash: {{ includeTemplate "dot_config/home-manager/modules/neovim-deps.nix.tmpl" . | sha256sum }}
 
 # Run the Home Manager pinned in flake.lock, with this flake's nixpkgs (root's `nixpkgs` input)
 # so the tool is built from the same nixpkgs as the configuration. Reading the node literally

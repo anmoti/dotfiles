@@ -1,3 +1,12 @@
+local deps = {
+  bin = {
+    { "claude", nix = "llm-agents.claude-code" },
+  },
+}
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

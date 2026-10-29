@@ -1,3 +1,332 @@
+local guard = require("utils.guard")
+
+local has_fd = guard.check({
+  bin = {
+    { "fd", nix = "fd" },
+  },
+})
+local has_rg = guard.check({
+  bin = {
+    { "rg", nix = "ripgrep" },
+  },
+})
+local has_git = guard.check({
+  bin = {
+    { "git", nix = "git" },
+    { "git-lfs", nix = "git-lfs" }, -- git status in LFS repos
+  },
+})
+local has_lazygit = has_git
+  and guard.check({
+    bin = {
+      { "lazygit", nix = "lazygit" },
+    },
+  })
+local has_gh = guard.check({
+  bin = {
+    { "gh", nix = "gh" },
+  },
+})
+local has_conf_list = has_fd
+  and guard.check({
+    util = { "chezmoi" },
+    bin = { -- scripts/conf_list.sh
+      "bash",
+      { "chezmoi", nix = "unstable.chezmoi" },
+      { "sort", nix = "coreutils" },
+    },
+  })
+
+local keys = {
+  {
+    "<leader>fb",
+    function()
+      Snacks.picker.buffers()
+    end,
+    desc = "Buffers",
+  },
+  {
+    "<C-\\>",
+    function()
+      Snacks.terminal.toggle(nil, {
+        win = {
+          position = "right",
+          width = 0.3,
+          keys = {
+            zoom = { "<C-f>", function() Snacks.zen.zoom() end, mode = "t", desc = "Zoom terminal" },
+          },
+        },
+        env = {
+          PATH = require("utils.path").resolved,
+        },
+      })
+    end,
+    desc = "Toggle terminal",
+  },
+}
+
+if has_fd then
+  vim.list_extend(keys, {
+    {
+      "<leader>ff",
+      function()
+        Snacks.picker.files()
+      end,
+      desc = "Find Files",
+    },
+  })
+end
+
+if has_rg then
+  vim.list_extend(keys, {
+    {
+      "<leader>fg",
+      function()
+        Snacks.picker.grep()
+      end,
+      desc = "Grep",
+    },
+  })
+end
+
+if has_git then
+  vim.list_extend(keys, {
+    {
+      "<leader>gs",
+      function()
+        Snacks.picker.git_status()
+      end,
+      desc = "Status",
+    },
+    {
+      "<leader>gd",
+      function()
+        Snacks.picker.git_diff()
+      end,
+      desc = "Diff",
+    },
+    {
+      "<leader>gb",
+      function()
+        Snacks.picker.git_branches()
+      end,
+      desc = "Branches",
+    },
+    {
+      "<leader>gf",
+      function()
+        Snacks.picker.git_files()
+      end,
+      desc = "Files",
+    },
+    {
+      "<leader>gG",
+      function()
+        Snacks.picker.git_grep()
+      end,
+      desc = "Grep",
+    },
+    {
+      "<leader>gS",
+      function()
+        Snacks.picker.git_stash()
+      end,
+      desc = "Stash",
+    },
+    {
+      "<leader>go",
+      function()
+        Snacks.gitbrowse()
+      end,
+      mode = { "n", "v" },
+      desc = "Browse",
+    },
+    {
+      "<leader>gm",
+      function()
+        Snacks.git.blame_line()
+      end,
+      desc = "Blame Line",
+    },
+    {
+      "<leader>glc",
+      function()
+        Snacks.picker.git_log()
+      end,
+      desc = "Commit",
+    },
+    {
+      "<leader>glf",
+      function()
+        Snacks.picker.git_log_file()
+      end,
+      desc = "File",
+    },
+    {
+      "<leader>gll",
+      function()
+        Snacks.picker.git_log_line()
+      end,
+      desc = "Line",
+    },
+  })
+end
+
+if has_lazygit then
+  vim.list_extend(keys, {
+    {
+      "<leader>gg",
+      function()
+        Snacks.lazygit()
+      end,
+      desc = "Lazygit",
+    },
+    {
+      "<leader>glgc",
+      function()
+        Snacks.lazygit.log()
+      end,
+      desc = "Commit",
+    },
+    {
+      "<leader>glgf",
+      function()
+        Snacks.lazygit.log_file()
+      end,
+      desc = "File",
+    },
+  })
+end
+
+if has_gh then
+  vim.list_extend(keys, {
+    {
+      "<leader>gi",
+      function()
+        Snacks.picker.gh_issue()
+      end,
+      desc = "GitHub Issues (open)",
+    },
+    {
+      "<leader>gI",
+      function()
+        Snacks.picker.gh_issue({ state = "all" })
+      end,
+      desc = "GitHub Issues (all)",
+    },
+    {
+      "<leader>gp",
+      function()
+        Snacks.picker.gh_pr()
+      end,
+      desc = "GitHub PRs (open)",
+    },
+    {
+      "<leader>gP",
+      function()
+        -- limit=40 以上だと GitHub GraphQL が 502/504 を返す (desert-sabaku/suzukaze)
+        Snacks.picker.gh_pr({ state = "all", limit = 20 })
+      end,
+      desc = "GitHub PRs (all)",
+    },
+  })
+end
+
+if has_conf_list then
+  vim.list_extend(keys, {
+    {
+      "<leader>fc",
+      function()
+        local history_file = vim.fn.stdpath("state") .. "/conf_history"
+
+        local function update_conf_history(path)
+          local dir = vim.fn.fnamemodify(history_file, ":h")
+          if vim.fn.isdirectory(dir) == 0 then
+            vim.fn.mkdir(dir, "p")
+          end
+
+          local lines = vim.fn.filereadable(history_file) == 1 and vim.fn.readfile(history_file) or {}
+          local new_lines = { path }
+          for _, line in ipairs(lines) do
+            if line ~= path and #new_lines < 100 then
+              table.insert(new_lines, line)
+            end
+          end
+          vim.fn.writefile(new_lines, history_file)
+        end
+
+        local script_path = vim.fn.expand("~/.config/nvim/scripts/conf_list.sh")
+
+        Snacks.picker.pick({
+          title = "Find Config file",
+
+          finder = function()
+            local items = {}
+            local seen = {}
+
+            if vim.fn.filereadable(history_file) == 1 then
+              for _, line in ipairs(vim.fn.readfile(history_file)) do
+                if line ~= "" and not seen[line] then
+                  table.insert(items, {
+                    text = line,
+                    file = line,
+                    dir = vim.fn.isdirectory(line) == 1,
+                  })
+                  seen[line] = true
+                end
+              end
+            end
+
+            local script_output = vim.fn.systemlist(script_path)
+            for _, line in ipairs(script_output) do
+              if line ~= "" and not seen[line] then
+                table.insert(items, {
+                  text = line,
+                  file = line,
+                  dir = vim.fn.isdirectory(line) == 1,
+                })
+                seen[line] = true
+              end
+            end
+
+            return items
+          end,
+
+          sort = {
+            fields = { "score:desc", "index" },
+          },
+
+          format = "file",
+          preview = "file",
+
+          confirm = function(picker, item)
+            if not item then return end
+
+            update_conf_history(item.file)
+
+            local source_res = require("chezmoi.commands").source_path({
+              targets = { item.file },
+              on_stderr = function() end,
+            })
+
+            local resolved = source_res[1] or item.file
+
+            picker:close()
+            if item.dir then
+              vim.fn.chdir(resolved)
+              picker:close()
+              Snacks.notify.info("Changed directory to: " .. resolved)
+            else
+              vim.cmd("edit " .. vim.fn.fnameescape(resolved))
+            end
+          end
+        })
+      end,
+      desc = "Find Config file",
+    },
+  })
+end
+
 return {
   {
     "folke/snacks.nvim",
@@ -51,270 +380,12 @@ return {
         enabled = true,
       },
       lazygit = {
-        enabled = true,
+        enabled = has_lazygit,
       },
       gh = {
-        enabled = true,
+        enabled = has_gh,
       },
     },
-    keys = {
-      {
-        "<leader>ff",
-        function()
-          Snacks.picker.files()
-        end,
-        desc = "Find Files",
-      },
-      {
-        "<leader>fg",
-        function()
-          Snacks.picker.grep()
-        end,
-        desc = "Grep",
-      },
-      {
-        "<leader>fb",
-        function()
-          Snacks.picker.buffers()
-        end,
-        desc = "Buffers",
-      },
-      {
-        "<leader>gg",
-        function()
-          Snacks.lazygit()
-        end,
-        desc = "Lazygit",
-      },
-      {
-        "<leader>gs",
-        function()
-          Snacks.picker.git_status()
-        end,
-        desc = "Status",
-      },
-      {
-        "<leader>gd",
-        function()
-          Snacks.picker.git_diff()
-        end,
-        desc = "Diff",
-      },
-      {
-        "<leader>gb",
-        function()
-          Snacks.picker.git_branches()
-        end,
-        desc = "Branches",
-      },
-      {
-        "<leader>gf",
-        function()
-          Snacks.picker.git_files()
-        end,
-        desc = "Files",
-      },
-      {
-        "<leader>gG",
-        function()
-          Snacks.picker.git_grep()
-        end,
-        desc = "Grep",
-      },
-      {
-        "<leader>gS",
-        function()
-          Snacks.picker.git_stash()
-        end,
-        desc = "Stash",
-      },
-      {
-        "<leader>go",
-        function()
-          Snacks.gitbrowse()
-        end,
-        mode = { "n", "v" },
-        desc = "Browse",
-      },
-      {
-        "<leader>gm",
-        function()
-          Snacks.git.blame_line()
-        end,
-        desc = "Blame Line",
-      },
-      {
-        "<leader>glc",
-        function()
-          Snacks.picker.git_log()
-        end,
-        desc = "Commit",
-      },
-      {
-        "<leader>glf",
-        function()
-          Snacks.picker.git_log_file()
-        end,
-        desc = "File",
-      },
-      {
-        "<leader>gll",
-        function()
-          Snacks.picker.git_log_line()
-        end,
-        desc = "Line",
-      },
-      {
-        "<leader>glgc",
-        function()
-          Snacks.lazygit.log()
-        end,
-        desc = "Commit",
-      },
-      {
-        "<leader>glgf",
-        function()
-          Snacks.lazygit.log_file()
-        end,
-        desc = "File",
-      },
-      {
-        "<leader>gi",
-        function()
-          Snacks.picker.gh_issue()
-        end,
-        desc = "GitHub Issues (open)",
-      },
-      {
-        "<leader>gI",
-        function()
-          Snacks.picker.gh_issue({ state = "all" })
-        end,
-        desc = "GitHub Issues (all)",
-      },
-      {
-        "<leader>gp",
-        function()
-          Snacks.picker.gh_pr()
-        end,
-        desc = "GitHub PRs (open)",
-      },
-      {
-        "<leader>gP",
-        function()
-          -- limit=40 以上だと GitHub GraphQL が 502/504 を返す (desert-sabaku/suzukaze)
-          Snacks.picker.gh_pr({ state = "all", limit = 20 })
-        end,
-        desc = "GitHub PRs (all)",
-      },
-      {
-        "<leader>fc",
-        function()
-          local history_file = vim.fn.stdpath("state") .. "/conf_history"
-
-          local function update_conf_history(path)
-            local dir = vim.fn.fnamemodify(history_file, ":h")
-            if vim.fn.isdirectory(dir) == 0 then
-              vim.fn.mkdir(dir, "p")
-            end
-
-            local lines = vim.fn.filereadable(history_file) == 1 and vim.fn.readfile(history_file) or {}
-            local new_lines = { path }
-            for _, line in ipairs(lines) do
-              if line ~= path and #new_lines < 100 then
-                table.insert(new_lines, line)
-              end
-            end
-            vim.fn.writefile(new_lines, history_file)
-          end
-
-          local script_path = vim.fn.expand("~/.config/nvim/scripts/conf_list.sh")
-
-          Snacks.picker.pick({
-            title = "Find Config file",
-
-            finder = function()
-              local items = {}
-              local seen = {}
-
-              if vim.fn.filereadable(history_file) == 1 then
-                for _, line in ipairs(vim.fn.readfile(history_file)) do
-                  if line ~= "" and not seen[line] then
-                    table.insert(items, {
-                      text = line,
-                      file = line,
-                      dir = vim.fn.isdirectory(line) == 1,
-                    })
-                    seen[line] = true
-                  end
-                end
-              end
-
-              local script_output = vim.fn.systemlist(script_path)
-              for _, line in ipairs(script_output) do
-                if line ~= "" and not seen[line] then
-                  table.insert(items, {
-                    text = line,
-                    file = line,
-                    dir = vim.fn.isdirectory(line) == 1,
-                  })
-                  seen[line] = true
-                end
-              end
-
-              return items
-            end,
-
-            sort = {
-              fields = { "score:desc", "index" },
-            },
-
-            format = "file",
-            preview = "file",
-
-            confirm = function(picker, item)
-              if not item then return end
-
-              update_conf_history(item.file)
-
-              local source_res = require("chezmoi.commands").source_path({
-                targets = { item.file },
-                on_stderr = function() end,
-              })
-
-              local resolved = source_res[1] or item.file
-
-              picker:close()
-              if item.dir then
-                vim.fn.chdir(resolved)
-                picker:close()
-                Snacks.notify.info("Changed directory to: " .. resolved)
-              else
-                vim.cmd("edit " .. vim.fn.fnameescape(resolved))
-              end
-            end
-          })
-        end,
-        desc = "Find Config file"
-      },
-      {
-        "<C-\\>",
-        function()
-          Snacks.terminal.toggle(nil, {
-            win = {
-              position = "right",
-              width = 0.3,
-              keys = {
-                zoom = { "<C-f>", function() Snacks.zen.zoom() end, mode = "t", desc = "Zoom terminal" },
-              },
-            },
-            env = {
-              PATH = require("utils.path").resolved,
-            },
-          })
-        end,
-        desc = "Toggle terminal"
-      },
-    },
+    keys = keys,
   },
 }

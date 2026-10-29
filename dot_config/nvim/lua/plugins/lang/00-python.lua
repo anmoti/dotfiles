@@ -1,3 +1,17 @@
+local deps = {
+  bin = {
+    { "uv", proto = "uv" },
+    { "fd", nix = "fd" }, -- venv-selector.nvim
+    { "ruff", nix = "ruff" },
+    { "basedpyright-langserver", nix = "basedpyright" },
+    -- { "mypy", nix = "mypy" },
+  },
+}
+
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

@@ -71,6 +71,19 @@
                   builtins.attrNames
                   (map (name: prev.callPackage (wallpaperDir + "/${name}") { }))
                 ];
+              texlive = prev.texlive.combine {
+                inherit (prev.texlive)
+                  scheme-small
+                  collection-latexextra
+                  collection-fontsrecommended
+                  collection-langjapanese
+                  tikz-cd
+                  circuitikz
+                  siunitx
+                  biber
+                  latexmk
+                  ;
+              };
             };
           })
         ];

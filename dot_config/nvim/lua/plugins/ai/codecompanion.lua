@@ -1,3 +1,14 @@
+local deps = {
+  ai = { "mcphub" },
+  bin = {
+    { "curl", nix = "curl" }, -- plenary.curl
+    { "doppler", nix = "doppler" },
+  },
+}
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 local doppler = require("utils.doppler")
 
 ---@module "lazy"

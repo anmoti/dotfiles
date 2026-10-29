@@ -1,3 +1,12 @@
+local deps = {
+  bin = {
+    { "wakatime-cli", nix = "unstable.wakatime-cli" },
+  },
+}
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

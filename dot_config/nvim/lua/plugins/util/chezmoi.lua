@@ -1,3 +1,12 @@
+local deps = {
+  bin = {
+    { "chezmoi", nix = "unstable.chezmoi" },
+  },
+}
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 return {
   {
     -- https://github.com/alker0/chezmoi.vim

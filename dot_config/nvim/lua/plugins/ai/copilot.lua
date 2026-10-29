@@ -1,3 +1,12 @@
+local deps = {
+  bin = {
+    { "copilot-language-server", nix = "llm-agents.copilot-language-server" },
+  },
+}
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

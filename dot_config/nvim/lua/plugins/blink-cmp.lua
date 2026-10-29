@@ -1,3 +1,13 @@
+local guard = require("utils.guard")
+
+local has_rust_fuzzy = guard.check({
+  bin = {
+    { "git", nix = "git" }, -- fuzzy.prebuilt_binaries (version)
+    { "curl", nix = "curl" }, -- fuzzy.prebuilt_binaries (download)
+    jit.os == "Windows" and "certutil" or { "sha256sum", nix = "coreutils" }, -- fuzzy.prebuilt_binaries (checksum)
+  },
+})
+
 ---@module "lazy"
 ---@type LazySpec
 return {
@@ -12,6 +22,9 @@ return {
     ---@module "blink.cmp"
     ---@type blink.cmp.Config
     opts = {
+      fuzzy = {
+        implementation = has_rust_fuzzy and "prefer_rust_with_warning" or "lua",
+      },
       snippets = { preset = "luasnip" },
       keymap = {
         preset = "super-tab",

@@ -1,3 +1,15 @@
+local deps = {
+  bin = {
+    { "sioyek", nix = "sioyek" },
+    { "latexmk", nix = "local.texlive" },
+    { "biber", nix = "local.texlive" },
+  },
+}
+
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

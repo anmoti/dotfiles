@@ -1,3 +1,13 @@
+local deps = {
+  bin = {
+    { "mcp-hub", nix = "mcp-hub.mcp-hub" },
+  },
+}
+
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {

@@ -1,3 +1,13 @@
+local deps = {
+  bin = {
+    { "nixd", nix = "unstable.nixd" },
+  },
+}
+
+if not require("utils.guard").check(deps) then
+  return {}
+end
+
 ---@module "lazy"
 ---@type LazySpec
 return {
