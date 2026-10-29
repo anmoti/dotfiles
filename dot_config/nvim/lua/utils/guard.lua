@@ -31,6 +31,9 @@ function M.check(deps)
       local cat_loaded = M.loaded[k] or {}
       for _, req in ipairs(v) do
         if not cat_loaded[req] then
+          vim.schedule(function()
+            vim.notify(string.format("[guard] %s/%s: missing module '%s/%s'", category, name, k, req), vim.log.levels.WARN)
+          end)
           ok = false
           break
         end
@@ -45,6 +48,9 @@ function M.check(deps)
     for _, entry in ipairs(deps.bin) do
       local cmd = type(entry) == "table" and entry[1] or entry
       if vim.fn.executable(cmd) ~= 1 then
+        vim.schedule(function()
+          vim.notify(string.format("[guard] %s/%s: missing bin '%s'", category, name, cmd), vim.log.levels.WARN)
+        end)
         ok = false
         break
       end
