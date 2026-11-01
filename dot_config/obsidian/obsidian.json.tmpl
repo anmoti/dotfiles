@@ -1,0 +1,17 @@
+{{- $cur := dict -}}
+{{- if stat .chezmoi.targetFile -}}
+{{-   $cur = include .chezmoi.targetFile | fromJson -}}
+{{- end -}}
+{{- $defaultVaultPath := printf "%s/Documents/Obsidian Vault" .chezmoi.homeDir -}}
+{{- $vaults := get $cur "vaults" | default dict -}}
+{{- $hasDefaultVault := false -}}
+{{- range $id, $v := $vaults -}}
+{{-   if and (hasKey $v "path") (eq (get $v "path") $defaultVaultPath) -}}
+{{-     $hasDefaultVault = true -}}
+{{-   end -}}
+{{- end -}}
+{{- if not $hasDefaultVault -}}
+{{-   $_ := set $vaults "bae5a696e53c3ac5" (dict "open" true "path" $defaultVaultPath "ts" 0) -}}
+{{- end -}}
+{{- $want := dict "frame" "native" "vaults" $vaults -}}
+{{- mergeOverwrite $cur $want | toJson -}}
