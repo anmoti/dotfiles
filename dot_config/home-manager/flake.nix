@@ -36,13 +36,6 @@
 
       pkgs = import nixpkgs {
         inherit system;
-        config = {
-          allowUnfreePredicate =
-            pkg:
-            builtins.elem (nixpkgs.lib.getName pkg) [
-              "claude-code"
-            ];
-        };
         overlays = [
           (final: prev: {
             unstable = import nixpkgs-unstable {
