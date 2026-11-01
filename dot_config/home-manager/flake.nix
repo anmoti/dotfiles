@@ -14,6 +14,9 @@
 
     mcp-servers.url = "github:natsukium/mcp-servers-nix";
 
+    # Do not follow nixpkgs: qmd's node_modules is a fixed-output derivation (sensitive to the bun version)
+    qmd.url = "github:tobi/qmd";
+
     mcp-hub = {
       url = "github:ravitemer/mcp-hub";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +32,7 @@
       llm-agents,
       mcp-servers,
       mcp-hub,
+      qmd,
       ...
     }:
     let
@@ -46,6 +50,7 @@
             mcp-servers = mcp-servers.packages.${system};
             mcp-hub = mcp-hub.packages.${system};
             local = {
+              qmd = prev.callPackage ./pkgs/qmd/package.nix { qmd = qmd.packages.${system}.default; };
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
               catppuccin-openbox = prev.callPackage ./pkgs/catppuccin-openbox/package.nix { };

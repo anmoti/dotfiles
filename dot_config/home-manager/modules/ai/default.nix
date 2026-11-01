@@ -12,7 +12,16 @@ in
   # `hm skills` runs npins against modules/ai/npins.
   home.packages = [ pkgs.npins ];
 
-  programs.mcp.enable = true;
+  programs.mcp = {
+    enable = true;
+
+    servers = {
+      qmd = {
+        command = "${pkgs.local.qmd}/bin/qmd";
+        args = [ "mcp" ];
+      };
+    };
+  };
 
   mcp-servers.programs = {
     playwright.enable = true;

@@ -16,6 +16,9 @@
       playerctl # hyprland(bind.conf), hyprlock(songdetail)
 
       nwg-drawer # waybar
+
+      pkgs.local.qmd # Obsidian vault search (BM25 + vector)
+
       kdePackages.qtdeclarative # qmlls QML modules (QtQuick etc.)
 
       pkgs.local.catppuccin-openbox # nestwm theme
