@@ -13,5 +13,6 @@
 {{- if not $hasDefaultVault -}}
 {{-   $_ := set $vaults "bae5a696e53c3ac5" (dict "open" true "path" $defaultVaultPath "ts" 0) -}}
 {{- end -}}
-{{- $want := dict "frame" "native" "vaults" $vaults -}}
+{{- $want := includeTemplate "obsidian.json" . | fromJson -}}
+{{- $_ := set $want "vaults" $vaults -}}
 {{- mergeOverwrite $cur $want | toJson -}}
