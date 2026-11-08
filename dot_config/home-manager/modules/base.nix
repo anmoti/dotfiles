@@ -20,6 +20,7 @@
     doppler # chezmoi
     gh # dot_gitconfig
     fzf # chezmoi-route-changes
+    jj
 
     # CLI Apps
     unstable.chezmoi
