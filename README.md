@@ -109,25 +109,31 @@ chezmoi init https://github.com/anmoti/dotfiles.git
 chezmoi apply
 ```
 
-### 実験的な変更の分離 (worktree)
+### 実験的な変更の分離 (jj workspace)
 
-機能ごとに git worktree を分け、`chezmoi apply` の前に `local-applied` ブランチへ合成する。
-`~/.local/share/chezmoi` は `local-applied` をチェックアウトした適用専用の場所なので、直接編集・コミットしない。
+機能ごとに jj workspace を分け、`chezmoi apply` の前に overlay (merge commit) へ合成する。
+`~/.local/share/chezmoi` は jj の default workspace で、overlay の作業コピーなので直接編集・コミットしない。
 
-| 場所 | ブランチ | 用途 |
+| 場所 | workspace | 用途 |
 |---|---|---|
-| `~/.local/share/chezmoi` | `local-applied` | chezmoi の適用元 (自動で作り直す) |
+| `~/.local/share/chezmoi` | `default` | overlay (chezmoi の適用元。自動で作り直す) |
 | `~/wip/git/github.com/anmoti/dotfiles` | `main` | クリーンな作業領域 (`hm update` の変更もここ) |
 | `~/wip/git/github.com/anmoti/dotfiles-feat-<名前>` | `feat/<名前>` | 機能ごとの実験領域 (未コミットでよい) |
 
 ```bash
 # 新しい機能を始める
-git -C ~/wip/git/github.com/anmoti/dotfiles worktree add -b feat/<名前> ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> main
+cd ~/wip/git/github.com/anmoti/dotfiles
+jj workspace add --colocate --name feat/<名前> ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> -r main
 
-# feat/ 以外 (chore/ など) も合成される。外したいときはブランチ名を wip/<名前> にする
+# overlay から外したい workspace にマーカーを置く (rm で戻る)
+touch ~/wip/git/github.com/anmoti/dotfiles-feat-<名前>/.chezmoi-nosync
 ```
 
-`chezmoi add` / `re-add` の後は、fzf で差分を移す worktree を選ぶ (Esc で中断)。
+overlay は `main` と各 workspace の `@` (作業コピーのコミット) を親にした merge commit。
+workspace の未コミット変更も入るが、その workspace で一度スナップショットされる必要がある
+(`snapshot.auto-update-stale = true` なので同期スクリプトから実行しても安全)。
+
+`chezmoi add` / `re-add` の後は、fzf で差分を移す workspace を選ぶ (Esc で中断)。
 hook は `~/.config/chezmoi/chezmoi.toml` に書く。このファイルはマシン固有で、リポジトリでは管理しない。
 
 ```toml
@@ -139,9 +145,15 @@ script = "/home/anmoti/.local/bin/chezmoi-route-changes"
 
 [hooks.re-add.post]
 script = "/home/anmoti/.local/bin/chezmoi-route-changes"
+
+# `chezmoi update` は git pull ではなく jj git fetch を実行する
+[update]
+command = "jj"
+args = ["git", "fetch"]
 ```
 
-競合した場合、`chezmoi apply` はエラーで止まる。該当する worktree の編集位置をずらして解消する。
+競合した場合、`chezmoi apply` はエラーで止まる (overlay は `jj op restore` で元に戻る)。
+jj は merge 時に rename を追わないので、`main` でファイル名を変えたら該当 workspace を `jj rebase` して揃える。
 
 ## System Configuration
 
@@ -182,8 +194,8 @@ HandleLidSwitchDocked=ignore
 | `term_alacritty` | Alacritty 起動 |
 | `change-brightness` | ddcutil + brightnessctl で輝度を統合制御 |
 | `hm` | Home Manager ラッパー (`list` / `update`) |
-| `chezmoi-sync-worktrees` | `wip/*` 以外の全 worktree を `local-applied` に合成 (`apply` の pre hook) |
-| `chezmoi-route-changes` | `add` / `re-add` した差分を fzf で選んだ worktree へ移す (post hook) |
+| `chezmoi-sync-worktrees` | `main` と各 workspace の `@` を merge して overlay を作る (`apply` の pre hook) |
+| `chezmoi-route-changes` | `add` / `re-add` した差分を fzf で選んだ workspace へ移す (post hook) |
 
 ## Resources
 

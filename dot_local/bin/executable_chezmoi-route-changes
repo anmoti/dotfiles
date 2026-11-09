@@ -1,7 +1,7 @@
 #!/bin/bash
 # chezmoi [hooks.add.post] / [hooks.re-add.post]:
-# move what chezmoi just wrote into the source dir (local-applied) to feature worktrees
-# with fzf, then rebuild local-applied.
+# move what chezmoi just wrote into the source dir to a workspace with fzf,
+# then rebuild the overlay.
 set -euo pipefail
 
 # hooks run on --dry-run too
@@ -9,45 +9,52 @@ case " ${CHEZMOI_ARGS:-} " in *" --dry-run "* | *" -n "*) exit 0 ;; esac
 
 # not `chezmoi source-path`: the parent chezmoi holds the state lock while hooks run
 source_dir=${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}
-root=$(git -C "$source_dir" rev-parse --show-toplevel)
+root=$(jj -R "$source_dir" root)
+cd "$root"
 
 changed() {
-  { git -C "$root" diff --name-only; git -C "$root" ls-files -o --exclude-standard; } | sort -u
+  jj diff -r @ --summary
 }
 
 move() {
-  local wt=$1 files=$2 f tracked=()
-  while IFS= read -r f; do
-    if git -C "$root" ls-files --error-unmatch -- "$f" &>/dev/null; then
-      tracked+=("$f")
-    elif [ -e "$wt/$f" ]; then
-      echo "route: skip $f (already exists in $wt)" >&2
+  local ws=$1 lines=$2 status f
+  local -a paths=()
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    status=${line%% *}
+    f=${line#* }
+    if [ "$status" = "D" ]; then
+      rm -f "$ws/$f"
     else
-      mkdir -p "$wt/$(dirname "$f")"
-      mv "$root/$f" "$wt/$f"
+      # don't clobber a different version in the destination
+      if [ -e "$ws/$f" ] && ! cmp -s "$root/$f" "$ws/$f"; then
+        echo "route: skip $f (differs in $ws)" >&2
+        continue
+      fi
+      mkdir -p "$ws/$(dirname "$f")"
+      cp -a "$root/$f" "$ws/$f"
     fi
-  done <<<"$files"
+    paths+=("$f")
+  done <<<"$lines"
 
-  [ ${#tracked[@]} -gt 0 ] || return 0
-  # shortcut: plain apply fails if the target worktree changed the same lines, when that bites try `git apply --3way`
-  if git -C "$root" diff --binary -- "${tracked[@]}" | git -C "$wt" apply --binary; then
-    git -C "$root" checkout -- "${tracked[@]}"
-  else
-    echo "route: could not apply to $wt; kept in $root" >&2
-  fi
+  [ ${#paths[@]} -gt 0 ] || return 0
+  # drop them from the overlay, then snapshot the destination workspace
+  jj restore -- "${paths[@]}"
+  ( cd "$ws" && jj --config signing.behavior=drop st >/dev/null )
 }
 
 while [ -n "$(changed)" ]; do
   files=$(changed | fzf --multi --prompt='files> ' \
-    --header='Tab: select / Enter: choose worktree / Esc: stop') || break
+    --header='Tab: select / Enter: choose workspace / Esc: stop') || break
   [ -n "$files" ] || break
-  wt=$(git -C "$root" worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}' |
-    grep -vxF "$root" | fzf --prompt='move to> ' --header='Esc: back to file selection') || continue
-  move "$wt" "$files"
+  ws=$(jj workspace list -T 'name ++ "\t" ++ root ++ "\n"' | grep -vF "	$root" |
+    fzf --prompt='move to> ' --header='Esc: back to file selection' | cut -f2-) || continue
+  [ -n "$ws" ] || continue
+  move "$ws" "$files"
 done
 
 if [ -n "$(changed)" ]; then
-  echo "route: changes remain in $root; local-applied is not rebuilt" >&2
+  echo "route: changes remain in $root; overlay is not rebuilt" >&2
   exit 0
 fi
 

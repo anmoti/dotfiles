@@ -1,5 +1,5 @@
 #!/bin/bash
-# Rebuild local-applied: main + every other worktree (uncommitted and untracked files included).
+# Rebuild the overlay: main + every jj workspace's working copy (dirty files included).
 # usage: chezmoi-sync-worktrees [source-dir]
 set -euo pipefail
 
@@ -8,40 +8,51 @@ case " ${CHEZMOI_ARGS:-} " in *" --dry-run "* | *" -n "*) exit 0 ;; esac
 
 # not `chezmoi source-path`: the parent chezmoi holds the state lock while hooks run
 source_dir=${1:-${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path)}}
-root=$(git -C "$source_dir" rev-parse --show-toplevel)
-branch=local-applied
-# merge commits and snapshots must not trigger the 1Password signing prompt
-nosign=(git -c commit.gpgsign=false)
+root=$(jj -R "$source_dir" root)
+cd "$root"
 
-if [ -n "$(git -C "$root" status --porcelain)" ]; then
-  echo "sync: $root has uncommitted changes; move them to a worktree first" >&2
+# commits created here must not trigger the signing backend
+jj=(jj --config signing.behavior=drop)
+
+if [ -n "$(${jj[@]} diff -r @ --summary)" ]; then
+  echo "sync: $root has unrouted changes; move them to a workspace first" >&2
   exit 1
 fi
 
-# Commit object of the worktree state without touching its index or working tree
-# (git stash create skips untracked files, so use a temporary index instead).
-snapshot() {
-  local wt=$1 idx
-  idx=$(mktemp -u)
-  GIT_INDEX_FILE=$idx git -C "$wt" read-tree HEAD
-  GIT_INDEX_FILE=$idx git -C "$wt" add -A
-  "${nosign[@]}" -C "$wt" commit-tree "$(GIT_INDEX_FILE=$idx git -C "$wt" write-tree)" -p HEAD -m "snapshot of $wt"
-  rm -f "$idx"
-}
-
-old=$(git -C "$root" rev-parse --verify -q "$branch" || true)
-git -C "$root" switch -C "$branch" main --quiet
-
-while IFS= read -r wt; do
-  [ "$wt" = "$root" ] || [ ! -d "$wt" ] && continue
-  # every branch is overlaid except wip/* (and detached HEADs); name a branch wip/* to keep it out
-  case $(git -C "$wt" branch --show-current) in wip/* | "") continue ;; esac
-  if ! "${nosign[@]}" -C "$root" merge --no-edit --quiet "$(snapshot "$wt")"; then
-    git -C "$root" merge --abort
-    [ -n "$old" ] && git -C "$root" reset --hard --quiet "$old"
-    echo "sync: conflict while merging $wt; $branch is left as before" >&2
-    exit 1
+# main, then every other workspace's @ (except ones marked .chezmoi-nosync)
+parents=(main)
+skipped=()
+while IFS= read -r ws; do
+  [ -n "$ws" ] || continue
+  [ "$ws" = "$root" ] && continue
+  if [ -e "$ws/.chezmoi-nosync" ]; then
+    skipped+=("$ws")
+    continue
   fi
-done < <(git -C "$root" worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}')
+  # snapshot that workspace (snapshot.auto-update-stale handles a stale copy)
+  ( cd "$ws" && jj --config signing.behavior=drop st >/dev/null 2>&1 ) || {
+    echo "sync: cannot snapshot $ws" >&2
+    exit 1
+  }
+  rev=$( cd "$ws" && jj log -r @ --no-graph -T 'commit_id' )
+  [ -n "$rev" ] || { echo "sync: no working copy in $ws" >&2; exit 1; }
+  parents+=("$rev")
+done < <(${jj[@]} workspace list -T 'root ++ "\n"')
 
-echo "sync: $branch rebuilt"
+for ws in ${skipped[@]+"${skipped[@]}"}; do
+  echo "sync: skip $ws (.chezmoi-nosync)" >&2
+done
+
+old_op=$(${jj[@]} op log --no-graph -n1 -T 'id')
+old_change=$(${jj[@]} log -r @ --no-graph -T 'change_id')
+
+${jj[@]} new "${parents[@]}" -m overlay >/dev/null
+
+if [ "$(${jj[@]} log -r @ --no-graph -T 'conflict')" != "false" ]; then
+  ${jj[@]} op restore "$old_op"
+  echo "sync: conflict while merging workspaces; overlay left as before" >&2
+  exit 1
+fi
+
+${jj[@]} abandon "$old_change" >/dev/null 2>&1 || true
+echo "sync: overlay rebuilt from $(( ${#parents[@]} - 1 )) workspaces"
