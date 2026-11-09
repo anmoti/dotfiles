@@ -18,13 +18,14 @@ return {
     opts = {
       servers = {
         gopls = {
+          filetypes = { "go", "gomod", "gowork" },
           ---@module "lspconfig"
           ---@type lspconfig.settings.gopls
           settings = {
             go = {},
             gopls = {},
-          }
-        }
+          },
+        },
       }
     },
   },
