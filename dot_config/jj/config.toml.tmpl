@@ -1,0 +1,20 @@
+[ui]
+pager = ":builtin"
+
+[user]
+name = "{{ .identity.name }}"
+email = "{{ .identity.email }}"
+
+[snapshot]
+auto-update-stale = true
+
+{{ if stat .ssh_signing.program -}}
+[signing]
+behavior = "drop"
+backend = "ssh"
+key = "{{ .identity.signingkey }}"
+backends.ssh.program = "{{ .ssh_signing.program }}"
+
+[git]
+sign-on-push = true
+{{ end -}}
