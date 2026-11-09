@@ -1,0 +1,6 @@
+{{- /* args: raw=実機の中身(無ければ空文字), res=書きたいmap, indent。意味が実機と同じなら実機のバイト列をそのまま返す（アプリの整形差で chezmoi に変更扱いされるのを防ぐ） */ -}}
+{{- if and .raw (eq (.res | toJson) (.raw | fromJson | toJson)) -}}
+{{- .raw -}}
+{{- else -}}
+{{- .res | toPrettyJson .indent | trim -}}
+{{- end -}}

@@ -1,5 +1,7 @@
 {{- /* legcordが書き戻すキー(modCacheなど)は実機の値を残し、管理しているキーだけ上書きする */ -}}
 {{- $cur := dict -}}
-{{- if stat .chezmoi.targetFile }}{{ $cur = include .chezmoi.targetFile | fromJson }}{{ end -}}
+{{- $raw := "" -}}
+{{- if stat .chezmoi.targetFile }}{{ $raw = include .chezmoi.targetFile }}{{ $cur = $raw | fromJson }}{{ end -}}
 {{- $want := includeTemplate "legcord-settings.json" . | fromJson -}}
-{{- mergeOverwrite $cur $want | toPrettyJson "    " | trim -}}
+{{- $res := mergeOverwrite (deepCopy $cur) $want -}}
+{{- includeTemplate "keep-json-format" (dict "raw" $raw "res" $res "indent" "    ") -}}
