@@ -33,6 +33,17 @@
       ];
     };
     initContent = lib.mkMerge [
+      # (lib.mkOrder 100 ''
+      #   # 1. 手動配置ディレクトリ
+      #   fpath=(~/.config/zsh/completions $fpath)
+      #
+      #   # 2. Home Manager / Nix Profile が配置する site-functions
+      #   fpath=(
+      #     "${config.home.profileDirectory}/share/zsh/site-functions"
+      #     "${config.home.profileDirectory}/share/zsh/vendor-completions"
+      #     $fpath
+      #   )
+      # '')
       (lib.mkOrder 550 ''
         fpath=(~/.config/zsh/completions $fpath)
       '')
