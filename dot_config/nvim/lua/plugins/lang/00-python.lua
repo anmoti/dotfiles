@@ -78,7 +78,14 @@ return {
   {
     "linux-cultist/venv-selector.nvim",
     cmd = "VenvSelect",
-    opts = {},
+    opts = {
+      options = {
+        -- notify ipynb.nvim (lang/jupyter.lua) that a venv was chosen
+        on_venv_activate_callback = function()
+          vim.api.nvim_exec_autocmds("User", { pattern = "VenvSelectActivated" })
+        end,
+      },
+    },
     keys = {
       { "<leader>lv", "<cmd>VenvSelect<cr>", desc = "Select VirtualEnv" },
     },

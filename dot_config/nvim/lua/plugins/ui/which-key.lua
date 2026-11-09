@@ -14,6 +14,7 @@ return {
         { "<leader>g", group = "Git" },
         { "<leader>gl", group = "Log" },
         { "<leader>glg", group = "Lazygit" },
+        { "<leader>k", group = "Notebook (Jupyter)" },
         { "<leader>l", group = "Code: LSP/Language" },
       },
       plugins = {
