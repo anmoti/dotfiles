@@ -1,0 +1,20 @@
+[user]
+name = "{{ .identity.name }}"
+email = "{{ .identity.email }}"
+
+[snapshot]
+# 他の workspace が作業コピーを書き換えたとき、jj workspace update-stale を自動で行う
+auto-update-stale = true
+
+{{ if stat .ssh_signing.program -}}
+[signing]
+behavior = "drop"
+backend = "ssh"
+key = "{{ .identity.signingkey }}"
+backends.ssh.program = "{{ .ssh_signing.program }}"
+
+[git]
+# 署名は push 時だけ行う。hook が作る overlay 用の merge commit で
+# 1Password のプロンプトが出ないようにするため。
+sign-on-push = true
+{{ end -}}

@@ -47,26 +47,38 @@ hm list
 chezmoi does **not** delete files from the home directory when they are removed from the source repository.
 When a file is removed from chezmoi source, always ask the user to manually delete the corresponding file from their home directory.
 
-## Worktree Overlay (`local-applied`)
+## Workspace Overlay (jj)
 
-Experimental changes are kept out of `main` by developing each feature in its own git worktree.
-The chezmoi source dir (`~/.local/share/chezmoi`) is **not** a place to edit or commit:
-it is checked out on the throwaway branch `local-applied`, rebuilt from the worktrees.
+Experimental changes are kept out of `main` by developing each feature in its own jj workspace.
+The chezmoi source dir (`~/.local/share/chezmoi`) is the jj **default workspace** and is **not** a place to edit or commit:
+its working-copy commit is the overlay, rebuilt from the other workspaces.
 
 ```
-~/.local/share/chezmoi                          local-applied  (applied by chezmoi; rebuilt automatically)
-~/wip/git/github.com/anmoti/dotfiles            main           (clean area: commits that go upstream)
-~/wip/git/github.com/anmoti/dotfiles-feat-<x>   feat/<x>       (one worktree per feature; uncommitted is fine)
+~/.local/share/chezmoi                          default workspace   (overlay; applied by chezmoi, rebuilt automatically)
+~/wip/git/github.com/anmoti/dotfiles            workspace main      (clean area: commits that go upstream)
+~/wip/git/github.com/anmoti/dotfiles-feat-<x>   workspace feat/<x>  (one workspace per change; uncommitted is fine)
 ```
 
-- `chezmoi-sync-worktrees` (hook `apply.pre`) recreates `local-applied` from `main`, then merges a snapshot of every
-  worktree except `wip/*` and detached HEADs (HEAD + uncommitted + untracked, taken via a temporary index, so worktrees are untouched).
-  Branches named `wip/*` are left out; any other prefix (`feat/*`, `chore/*`, …) is overlaid. A merge conflict aborts the sync and fails `chezmoi apply`.
-  It refuses to run if the source dir has uncommitted changes.
+- The overlay is a merge commit over `main` and every other workspace's working-copy commit: `jj new main 'feat/x@' ...`.
+  `<workspace>@` includes that workspace's uncommitted changes, but only after it has been snapshotted (`jj st` there),
+  which `snapshot.auto-update-stale = true` makes safe to do from the sync script.
+- `chezmoi-sync-worktrees` (hook `apply.pre`) rebuilds the overlay. A workspace is left out when it contains a
+  `.chezmoi-nosync` marker file (gitignored): `touch <workspace>/.chezmoi-nosync` to exclude, `rm` it to include again.
+  A conflicting merge is rolled back with `jj op restore` and fails `chezmoi apply`. The source dir must have no
+  unrouted changes.
 - `chezmoi-route-changes` (hooks `add.post` / `re-add.post`) takes what `chezmoi add` / `re-add` just wrote into the source dir
-  and moves it, chosen with fzf, to a worktree (multi-select files, then the target worktree; repeat; Esc to stop),
-  then rebuilds `local-applied`. Leftovers keep the source dir dirty, so the rebuild is skipped.
-  Changes from `hm update` go to the `main` worktree.
+  and moves it, chosen with fzf, to a workspace (multi-select files, then the target workspace; repeat; Esc to stop),
+  then rebuilds the overlay. Leftovers keep the source dir dirty, so the rebuild is skipped.
+  Changes from `hm update` go to the `main` workspace.
+- Create a workspace with:
+
+  ```sh
+  cd ~/wip/git/github.com/anmoti/dotfiles
+  jj workspace add --colocate --name feat/<x> ~/wip/git/github.com/anmoti/dotfiles-feat-<x> -r main
+  ```
+
+- `jj` does not follow renames when merging (git's merge does). Keep a workspace rebased onto `main` when `main` renames
+  files, otherwise the overlay merge conflicts on the old path.
 - Hooks live in `~/.config/chezmoi/chezmoi.toml`, which is machine-local and **not** managed by this repo:
 
 ```toml
@@ -78,19 +90,24 @@ script = "/home/anmoti/.local/bin/chezmoi-route-changes"
 
 [hooks.re-add.post]
 script = "/home/anmoti/.local/bin/chezmoi-route-changes"
+
+# `chezmoi update` runs `jj git fetch` (then applies) instead of `git pull`
+[update]
+command = "jj"
+args = ["git", "fetch"]
 ```
 
 Rules for agents:
 
-- Worktrees keep parallel pieces of work from getting mixed up: one worktree per change (`feat/*`, `chore/*`, …).
-  Make changes in such a worktree (create one if none fits), never in `~/.local/share/chezmoi`.
-  The `main` worktree is the user's own: they touch it by hand (e.g. `hm update`) and commit what goes upstream.
+- Workspaces keep parallel pieces of work from getting mixed up: one workspace per change (`feat/*`, `chore/*`, …).
+  Make changes in such a workspace (create one if none fits), never in `~/.local/share/chezmoi`.
+  The `main` workspace is the user's own: they touch it by hand (e.g. `hm update`) and commit what goes upstream.
   Do not edit there unless the user explicitly says so.
-  If it is unclear which worktree a change belongs to, ask before editing.
-  Uncommitted changes in other worktrees are intentional; do not commit them.
-- Never push `local-applied`.
+  If it is unclear which workspace a change belongs to, ask before editing.
+  Uncommitted changes in other workspaces are intentional; do not commit them.
+- Never push the overlay: it has no bookmark.
 - Hooks must not call `chezmoi` (e.g. `chezmoi source-path`): the parent process holds the state lock. Use `$CHEZMOI_SOURCE_DIR`.
-- Two worktrees editing the same place conflict on sync. Keep list insertions (e.g. `home.packages`) apart from each other.
+- Two workspaces editing the same place conflict on sync. Keep list insertions (e.g. `home.packages`) apart from each other.
 
 ## chezmoi File Naming Conventions
 

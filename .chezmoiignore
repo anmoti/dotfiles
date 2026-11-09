@@ -1,5 +1,7 @@
 README.md
 AGENTS.md
+.gitignore
+.chezmoi-nosync
 dot_config/hypr/local.lua
 
 {{- if eq .chezmoi.os "windows" }}
