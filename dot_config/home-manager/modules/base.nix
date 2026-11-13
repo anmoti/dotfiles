@@ -19,8 +19,9 @@
     # CLI Deps
     doppler # chezmoi
     gh # dot_gitconfig
-    fzf # chezmoi-route-changes
-    jj
+    fzf
+    # 0.46+ の `jj workspace add --colocate` を使うため unstable
+    unstable.jujutsu # jj: workspace 運用
 
     # CLI Apps
     unstable.chezmoi
