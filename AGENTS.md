@@ -47,67 +47,57 @@ hm list
 chezmoi does **not** delete files from the home directory when they are removed from the source repository.
 When a file is removed from chezmoi source, always ask the user to manually delete the corresponding file from their home directory.
 
-## Workspace Overlay (jj)
+## Workspaces (jj)
 
 Experimental changes are kept out of `main` by developing each feature in its own jj workspace.
-The chezmoi source dir (`~/.local/share/chezmoi`) is the jj **default workspace** and is **not** a place to edit or commit:
-its working-copy commit is the overlay, rebuilt from the other workspaces.
+The repository root (`~/.local/share/chezmoi`, where `.git` and `.jj` live) is also chezmoi's source dir
+and checks out `main`; it is the state that `chezmoi apply` writes.
 
 ```
-~/.local/share/chezmoi                          default workspace   (overlay; applied by chezmoi, rebuilt automatically)
-~/wip/git/github.com/anmoti/dotfiles            workspace main      (clean area: commits that go upstream)
-~/wip/git/github.com/anmoti/dotfiles-feat-<x>   workspace feat/<x>  (one workspace per change; uncommitted is fine)
+~/.local/share/chezmoi                          repo root + workspace main  (chezmoi sourceDir; applied by `chezmoi apply`)
+~/wip/git/github.com/anmoti/dotfiles-feat-<x>   workspace feat/<x>         (one workspace per change; uncommitted is fine)
 ```
 
-- The overlay is a merge commit over `main` and every other workspace's working-copy commit: `jj new main 'feat/x@' ...`.
-  `<workspace>@` includes that workspace's uncommitted changes, but only after it has been snapshotted (`jj st` there),
-  which `snapshot.auto-update-stale = true` makes safe to do from the sync script.
-- `chezmoi-sync-worktrees` (hook `apply.pre`) rebuilds the overlay. A workspace is left out when it contains a
-  `.chezmoi-nosync` marker file (gitignored): `touch <workspace>/.chezmoi-nosync` to exclude, `rm` it to include again.
-  A conflicting merge is rolled back with `jj op restore` and fails `chezmoi apply`. The source dir must have no
-  unrouted changes.
-- `chezmoi-route-changes` (hooks `add.post` / `re-add.post`) takes what `chezmoi add` / `re-add` just wrote into the source dir
-  and moves it, chosen with fzf, to a workspace (multi-select files, then the target workspace; repeat; Esc to stop),
-  then rebuilds the overlay. Leftovers keep the source dir dirty, so the rebuild is skipped.
-  Changes from `hm update` go to the `main` workspace.
+- `~/.config/chezmoi/chezmoi.toml` is machine-local and **not** managed by this repo.
+  `sourceDir` stays at the default; only the update command is overridden:
+
+```toml
+# `chezmoi update` fetches and moves the working copy onto `main` instead of `git pull`
+[update]
+command = "sh"
+args = ["-c", "jj git fetch && jj new main"]
+```
+
+- `chezmoi apply` applies exactly what is checked out at the repository root.
+  There is no overlay merge, hook, or change routing: the workspace you edit is the one that gets applied.
+- To try a feature workspace on its own, apply it with `--source`:
+
+  ```sh
+  chezmoi --source ~/wip/git/github.com/anmoti/dotfiles-feat-<x> apply
+  ```
+
+- `chezmoi add` / `re-add` write into the repository root; commit them there.
 - Create a workspace with:
 
   ```sh
-  cd ~/wip/git/github.com/anmoti/dotfiles
+  cd ~/.local/share/chezmoi
   jj workspace add --colocate --name feat/<x> ~/wip/git/github.com/anmoti/dotfiles-feat-<x> -r main
   ```
 
-- `jj` does not follow renames when merging (git's merge does). Keep a workspace rebased onto `main` when `main` renames
-  files, otherwise the overlay merge conflicts on the old path.
-- Hooks live in `~/.config/chezmoi/chezmoi.toml`, which is machine-local and **not** managed by this repo:
-
-```toml
-[hooks.apply.pre]
-script = "/home/anmoti/.local/bin/chezmoi-sync-worktrees"
-
-[hooks.add.post]
-script = "/home/anmoti/.local/bin/chezmoi-route-changes"
-
-[hooks.re-add.post]
-script = "/home/anmoti/.local/bin/chezmoi-route-changes"
-
-# `chezmoi update` runs `jj git fetch` (then applies) instead of `git pull`
-[update]
-command = "jj"
-args = ["git", "fetch"]
-```
+- `chezmoi update` does the fetch and the follow-up itself; if you run `jj git fetch` by hand,
+  run `jj new main` (or a rebase) afterwards so the applied working copy catches up.
+  The working copy does not follow the bookmark by itself.
+- `jj` does not follow renames when merging (git's merge does). Rebase a workspace onto `main` when `main` renames files.
 
 Rules for agents:
 
 - Workspaces keep parallel pieces of work from getting mixed up: one workspace per change (`feat/*`, `chore/*`, …).
-  Make changes in such a workspace (create one if none fits), never in `~/.local/share/chezmoi`.
-  The `main` workspace is the user's own: they touch it by hand (e.g. `hm update`) and commit what goes upstream.
+  Make changes in such a workspace (create one if none fits).
+  The repository root is the user's own `main` checkout: they touch it by hand (e.g. `hm update`) and commit what goes upstream.
   Do not edit there unless the user explicitly says so.
   If it is unclear which workspace a change belongs to, ask before editing.
   Uncommitted changes in other workspaces are intentional; do not commit them.
-- Never push the overlay: it has no bookmark.
-- Hooks must not call `chezmoi` (e.g. `chezmoi source-path`): the parent process holds the state lock. Use `$CHEZMOI_SOURCE_DIR`.
-- Two workspaces editing the same place conflict on sync. Keep list insertions (e.g. `home.packages`) apart from each other.
+- `~/.local/share/chezmoi` is only a store: never edit files there, and never point `chezmoi` at it.
 
 ## chezmoi File Naming Conventions
 
@@ -136,7 +126,7 @@ dot_config/
   oh-my-posh/          # Shell prompt theme
   satty/               # Screenshot annotation
   udev/                # udev rules (must be manually copied to /etc/udev/rules.d/ as root)
-dot_local/bin/         # Custom scripts placed in PATH (hm, term, chezmoi-sync-worktrees, …)
+dot_local/bin/         # Custom scripts placed in PATH (hm, term, …)
 dot_gitconfig.tmpl     # Git config (template for 1Password SSH signing)
 dot_wakatime.cfg.tmpl  # WakaTime config (template)
 dot_editorconfig       # EditorConfig
