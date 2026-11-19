@@ -62,15 +62,11 @@ local mobi = {
   scale = 1.20,
   w = 1920,
   h = 1080,
-  x = nil,
-  y = nil,
 }
-mobi.x = legi.x - (mobi.w / mobi.scale)
-mobi.y = legi.y
 
 hl.monitor({
   output = "desc:Invalid Vendor Codename - RTK C-1 demoset-1",
   mode = string.format("%dx%d@60.00", mobi.w, mobi.h),
-  position = string.format("%dx%d", mobi.x, mobi.y),
+  position = "auto-center-left",
   scale = "1.20",
 })

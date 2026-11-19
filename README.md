@@ -109,39 +109,40 @@ chezmoi init https://github.com/anmoti/dotfiles.git
 chezmoi apply
 ```
 
-### 実験的な変更の分離 (worktree)
+### 実験的な変更の分離 (jj workspace)
 
-機能ごとに git worktree を分け、`chezmoi apply` の前に `local-applied` ブランチへ合成する。
-`~/.local/share/chezmoi` は `local-applied` をチェックアウトした適用専用の場所なので、直接編集・コミットしない。
+機能ごとに jj workspace を分ける。リポジトリのルート (`~/.local/share/chezmoi`、`.git` / `.jj` がある場所) が
+chezmoi の適用元で、`main` をチェックアウトした作業コピーでもある。
 
-| 場所 | ブランチ | 用途 |
+| 場所 | workspace | 用途 |
 |---|---|---|
-| `~/.local/share/chezmoi` | `local-applied` | chezmoi の適用元 (自動で作り直す) |
-| `~/wip/git/github.com/anmoti/dotfiles` | `main` | クリーンな作業領域 (`hm update` の変更もここ) |
+| `~/.local/share/chezmoi` | `main` | リポジトリ本体 + 適用される作業コピー (`hm update` の変更もここ) |
 | `~/wip/git/github.com/anmoti/dotfiles-feat-<名前>` | `feat/<名前>` | 機能ごとの実験領域 (未コミットでよい) |
 
 ```bash
 # 新しい機能を始める
-git -C ~/wip/git/github.com/anmoti/dotfiles worktree add -b feat/<名前> ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> main
+cd ~/.local/share/chezmoi
+jj workspace add --colocate --name feat/<名前> ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> -r main
 
-# feat/ 以外 (chore/ など) も合成される。外したいときはブランチ名を wip/<名前> にする
+# その workspace の内容だけを適用して試す
+chezmoi --source ~/wip/git/github.com/anmoti/dotfiles-feat-<名前> apply
 ```
 
-`chezmoi add` / `re-add` の後は、fzf で差分を移す worktree を選ぶ (Esc で中断)。
-hook は `~/.config/chezmoi/chezmoi.toml` に書く。このファイルはマシン固有で、リポジトリでは管理しない。
+`chezmoi apply` はルートにチェックアウトされている内容をそのまま適用する。
+overlay の merge やフックは無いので、編集したワークツリーがそのまま適用対象になる。
+
+`chezmoi add` / `re-add` はルートに書き込まれるので、そこでコミットする。
+`~/.config/chezmoi/chezmoi.toml` はマシン固有で、リポジトリでは管理しない (`sourceDir` は既定のまま)。
 
 ```toml
-[hooks.apply.pre]
-script = "/home/anmoti/.local/bin/chezmoi-sync-worktrees"
-
-[hooks.add.post]
-script = "/home/anmoti/.local/bin/chezmoi-route-changes"
-
-[hooks.re-add.post]
-script = "/home/anmoti/.local/bin/chezmoi-route-changes"
+# `chezmoi update` は git pull ではなく jj git fetch + 作業コピーの追随を行う
+[update]
+command = "sh"
+args = ["-c", "jj git fetch && jj new main"]
 ```
 
-競合した場合、`chezmoi apply` はエラーで止まる。該当する worktree の編集位置をずらして解消する。
+`jj git fetch` を手で実行したときは、作業コピーは自動で追随しないので `jj new main` などで揃える。
+jj は merge 時に rename を追わないので、`main` でファイル名を変えたら該当 workspace を `jj rebase` して揃える。
 
 ## System Configuration
 
@@ -182,8 +183,6 @@ HandleLidSwitchDocked=ignore
 | `term_alacritty` | Alacritty 起動 |
 | `change-brightness` | ddcutil + brightnessctl で輝度を統合制御 |
 | `hm` | Home Manager ラッパー (`list` / `update`) |
-| `chezmoi-sync-worktrees` | `wip/*` 以外の全 worktree を `local-applied` に合成 (`apply` の pre hook) |
-| `chezmoi-route-changes` | `add` / `re-add` した差分を fzf で選んだ worktree へ移す (post hook) |
 
 ## Resources
 

@@ -15,6 +15,11 @@
       ddcutil # change-brightness
       playerctl # hyprland(bind.conf), hyprlock(songdetail)
 
+      (catppuccin-gtk.override {
+        variant = "mocha";
+        accents = [ "sapphire" ];
+      }) # gtk theme (gtk-theme-name in gtk-3.0/settings.ini)
+
       nwg-drawer # waybar
 
       pkgs.local.qmd # Obsidian vault search (BM25 + vector)

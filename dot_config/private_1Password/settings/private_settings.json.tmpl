@@ -1,4 +1,9 @@
 {{- $cur := dict -}}
-{{- if stat .chezmoi.targetFile }}{{ $cur = include .chezmoi.targetFile | fromJson }}{{ end -}}
+{{- $raw := "" -}}
+{{- if stat .chezmoi.targetFile }}
+{{    $raw = include .chezmoi.targetFile }}
+{{    $cur = $raw | fromJson }}
+{{  end -}}
 {{- $want := includeTemplate "1Password-settings.json" . | fromJson -}}
-{{- mergeOverwrite $cur $want | toPrettyJson "    " | trim -}}
+{{- $res := mergeOverwrite (deepCopy $cur) $want -}}
+{{- includeTemplate "keep-json-format" (dict "raw" $raw "res" $res "indent" "    ") -}}

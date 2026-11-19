@@ -25,6 +25,8 @@
 {{- end -}}
 
 {{- /* 実機データに管理オプションと自動整形済み plugins をマージ */ -}}
-{{- $res := mergeOverwrite $cur $want -}}
+{{- $res := mergeOverwrite (deepCopy $cur) $want -}}
 {{- $_ := set $res "plugins" $cleanedPlugins -}}
-{{- $res | toPrettyJson "\t" | trim -}}
+{{- $raw := "" -}}
+{{- if stat .chezmoi.targetFile }}{{ $raw = include .chezmoi.targetFile }}{{ end -}}
+{{- includeTemplate "keep-json-format" (dict "raw" $raw "res" $res "indent" "\t") -}}
