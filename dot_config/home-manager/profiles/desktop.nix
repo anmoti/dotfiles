@@ -9,6 +9,7 @@
   home.packages =
     (with pkgs; [
       nemo
+      nemo-fileroller
 
       wl-clipboard # satty
       brightnessctl # change-brightness
