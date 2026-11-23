@@ -1,6 +1,6 @@
 local deps = {
   bin = {
-    { "bash-language-server", nix = "bash-language-server" },
+    { "shuck", nix = "local.shuck" },
   },
 }
 
@@ -15,9 +15,7 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        bashls = {
-          filetypes = { "bash", "sh", "zsh" },
-        },
+        shuck = {},
       },
     },
   },

@@ -53,6 +53,7 @@
               qmd = prev.callPackage ./pkgs/qmd/package.nix { qmd = qmd.packages.${system}.default; };
               vscode-css-language-server = prev.callPackage ./pkgs/vscode-css-language-server/package.nix { };
               gtk-css-language-server = prev.callPackage ./pkgs/gtk-css-language-server/package.nix { };
+              shuck = prev.callPackage ./pkgs/shuck/package.nix { };
               catppuccin-openbox = prev.callPackage ./pkgs/catppuccin-openbox/package.nix { };
               # Patches target labwc/wlroots 0.20.2
               nestwm = prev.callPackage ./pkgs/nestwm/package.nix {
