@@ -45,17 +45,20 @@ blocks:
     segments:
       - type: os
         style: powerline
-        template: " {{ .Icon }}{{ if .WSL }} (WSL){{ end }} {{ .HostName }}@{{ .UserName }} "
+        templates:
+          - " {{ .Icon }} "
+          - "{{ if .WSL }}(WSL) {{ end }}"
+          - "{{ .HostName }}@{{ .UserName }} "
         foreground: p:text
         foreground_templates:
-          - '{{ if eq "windows" .OS }}#0079F5{{end}}'
-          - '{{ if eq "arch"    .OS }}#1791CF{{end}}'
-          - '{{ if eq "cachyos" .OS }}#82DCCC{{end}}'
+          - '{{ if eq "windows" .OS }}#0079F5{{ end }}'
+          - '{{ if eq "arch"    .OS }}#1791CF{{ end }}'
+          - '{{ if eq "cachyos" .OS }}#82DCCC{{ end }}'
         background: p:surface0
         background_templates:
-          - '{{ if eq "windows" .OS }}#E6F2FB{{end}}'
-          - '{{ if eq "arch"    .OS }}#E8F4FA{{end}}'
-          - '{{ if eq "cachyos" .OS }}#1A2C29{{end}}'
+          - '{{ if eq "windows" .OS }}#E6F2FB{{ end }}'
+          - '{{ if eq "arch"    .OS }}#E8F4FA{{ end }}'
+          - '{{ if eq "cachyos" .OS }}#1A2C29{{ end }}'
         options:
           # yaml-language-server-disable Property cachyos is not allowed.
           cachyos: "\uF303" # 
@@ -84,14 +87,18 @@ blocks:
       - type: git
         style: powerline
         powerline_symbol: "\uE0B0" # 
-        template: " {{ .UpstreamIcon }} {{ .HEAD }} {{if .BranchStatus }}{{ .BranchStatus }} {{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} "
+        templates:
+          - " {{ .UpstreamIcon }} {{ .HEAD }} "
+          - "{{ with .BranchStatus }}{{ . }} {{ end }}"
+          - "{{ if .Working.Changed }}\uF044 {{ .Working.String }} {{ end }}" # 
+          - "{{ if and .Working.Changed .Staging.Changed }}| {{ end }}"
+          - "{{ if .Staging.Changed }}\uF046 {{ .Staging.String }} {{ end }}" # 
         foreground: p:base
         background: p:lavender
         background_templates:
-          - "{{ if or (.Working.Changed) (.Staging.Changed) }}p:yellow{{ end }}"
+          - "{{ if or .Working.Changed .Staging.Changed }}p:yellow{{ end }}"
           - "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:red{{ end }}"
-          - "{{ if gt .Ahead 0 }}p:pink{{ end }}"
-          - "{{ if gt .Behind 0 }}p:pink{{ end }}"
+          - "{{ if or (gt .Ahead 0) (gt .Behind 0) }}p:pink{{ end }}"
         options:
           native_status: true
           disable_with_jj: true

@@ -9,11 +9,17 @@
   home.packages =
     (with pkgs; [
       nemo
+      nemo-fileroller
 
       wl-clipboard # satty
       brightnessctl # change-brightness
       ddcutil # change-brightness
       playerctl # hyprland(bind.conf), hyprlock(songdetail)
+
+      (catppuccin-gtk.override {
+        variant = "mocha";
+        accents = [ "sapphire" ];
+      }) # gtk theme (gtk-theme-name in gtk-3.0/settings.ini)
 
       nwg-drawer # waybar
 

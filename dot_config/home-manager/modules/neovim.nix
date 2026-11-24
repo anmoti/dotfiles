@@ -17,18 +17,6 @@
     withPython3 = true;
     sideloadInitLua = true;
 
-    extraPython3Packages =
-      ps: with ps; [
-        jupyter-client # molten-nvim
-        cairosvg # molten-nvim
-        pnglatex # molten-nvim
-        plotly # molten-nvim
-        kaleido # molten-nvim
-        pyperclip # molten-nvim
-        nbformat # molten-nvim
-        pillow # molten-nvim
-      ];
-
     plugins = [ pkgs.vimPlugins.nvim-treesitter.withAllGrammars ];
 
     extraWrapperArgs = [
