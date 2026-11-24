@@ -98,6 +98,10 @@ do
     hl.bind(MODS(key), hl.dsp.window.move({ workspace = i }))
   end
 
+  -- Keyboard-only relative workspace switching
+  hl.bind(MODS "TAB", hl.dsp.focus({ workspace = "m-1" }))
+  hl.bind(MOD_ "TAB", hl.dsp.focus({ workspace = "m+1" }))
+
   hl.bind(MOD_ "mouse_up", hl.dsp.focus({ workspace = "m-1" }))
   hl.bind(MOD_ "mouse_down", hl.dsp.focus({ workspace = "m+1" }))
   hl.bind(MODS "mouse_up", hl.dsp.window.move({ workspace = "m-1" }))
