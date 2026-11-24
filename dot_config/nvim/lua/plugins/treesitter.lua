@@ -6,11 +6,7 @@ return {
     branch = "main",
     build = false, -- parsers are installed via home-manager (pkgs.vimPlugins.nvim-treesitter.withAllGrammars)
     lazy = false,
-    config = function(plugin)
-      -- nvim-treesitter main branch stores queries under runtime/, not the plugin root.
-      -- Add it to rtp so that vim.treesitter can find highlights.scm etc.
-      vim.opt.rtp:prepend(plugin.dir .. "/runtime")
-
+    config = function()
       require("nvim-treesitter").setup()
 
       vim.api.nvim_create_autocmd("FileType", {
