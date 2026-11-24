@@ -15,7 +15,6 @@
     package = pkgs.unstable.neovim-unwrapped;
     withRuby = false;
     withPython3 = true;
-    waylandSupport = true;
     sideloadInitLua = true;
 
     extraPython3Packages =
@@ -42,6 +41,7 @@
           bash
           git # lazy.nvim bootstrap
           local.proto
+          wl-clipboard # clipboard provider
         ])
         ++ (import ./neovim-deps.nix pkgs)
       ))
