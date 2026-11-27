@@ -243,11 +243,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1792033446,
-        "narHash": "sha256-NRhUY+5guDsCihcHv2BAiZtm9saC1H1Li/P+k4v/FPk=",
+        "lastModified": 1795210444,
+        "narHash": "sha256-68Zh1jVBwnt1TlVMJ5CAq4ZtKZ7rXVKy0HKtDH858k8=",
         "owner": "tobi",
         "repo": "qmd",
-        "rev": "86d2365d17fc682e491c2c53d1e4a884aee8682a",
+        "rev": "8be0c42395c02ff73bce6d6c2e67d7905b0a771c",
         "type": "github"
       },
       "original": {

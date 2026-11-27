@@ -14,10 +14,6 @@ let
   ];
 in
 
-# Upstream's wrapper exports a Nix glibc in LD_LIBRARY_PATH and then runs `uname -s`.
-# On a non-NixOS host that resolves to the host's /usr/bin/uname, which aborts with
-# "stack smashing detected" (glibc mismatch). Use Nix's uname instead.
-#
 # GPU backends are exposed portably (no vendor is assumed):
 #  - Vulkan: every Mesa ICD shipped by Nix (Intel/AMD/NVK/llvmpipe/...) is offered.
 #    Host ICDs are skipped (built against a newer glibc than the wrapper's).
@@ -26,13 +22,16 @@ in
 #    build time). node-llama-cpp then auto-picks the best available backend.
 runCommand "qmd" { inherit (qmd) meta; } ''
   mkdir -p $out/bin
-  sed 's|\$(uname -s)|$(${coreutils}/bin/uname -s)|' ${qmd}/bin/qmd > $out/bin/qmd
+  cat ${qmd}/bin/qmd > $out/bin/qmd
 
   sed -i "s|^\(export LD_LIBRARY_PATH='\)|\1${vulkanLibs}:|" $out/bin/qmd
 
   # The upstream wrapper ends with `exec bun ...`; move that line out so the
   # portable backend logic (below) runs before exec.
-  _exec_line=$(grep '^exec ' $out/bin/qmd)
+  _exec_line=$(grep '^exec ' $out/bin/qmd) || {
+    echo "qmd wrapper: no 'exec' line found; upstream wrapper layout changed" >&2
+    exit 1
+  }
   sed -i '/^exec /d' $out/bin/qmd
 
   # Append portable GPU backend logic (auto-detect). Uses Nix coreutils because
@@ -69,6 +68,8 @@ runCommand "qmd" { inherit (qmd) meta; } ''
   ${coreutils}/bin/printf '%s\n' "$_exec_line" >> $out/bin/qmd
 
   chmod +x $out/bin/qmd
-  grep -q '${coreutils}/bin/uname' $out/bin/qmd
-  grep -q '${vulkanLibs}' $out/bin/qmd
+  grep -q '${vulkanLibs}' $out/bin/qmd || {
+    echo "qmd wrapper: LD_LIBRARY_PATH patch failed; upstream wrapper layout changed" >&2
+    exit 1
+  }
 ''
