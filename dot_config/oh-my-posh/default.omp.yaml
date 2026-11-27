@@ -68,6 +68,19 @@ blocks:
         background: p:sapphire
         options:
           style: unique
+      - type: jujutsu
+        style: powerline
+        powerline_symbol: "\uE0B0" # 
+        templates:
+          - " \uF1FA " # 
+          - "{{ .ClosestBookmarks | default .ChangeID }}{{ with .AheadCount }}⇡{{ . }}{{ end }} "
+          - "{{ if .Working.Changed }}\uF044 {{ .Working.String }} {{ end }}" # 
+        foreground: p:base
+        background: p:lavender
+        background_templates:
+          - "{{ if .Working.Changed }}p:yellow{{ end }}"
+        options:
+          ignore_working_copy: false
       - type: git
         style: powerline
         powerline_symbol: "\uE0B0" # 
@@ -80,8 +93,8 @@ blocks:
           - "{{ if gt .Ahead 0 }}p:pink{{ end }}"
           - "{{ if gt .Behind 0 }}p:pink{{ end }}"
         options:
-          fetch_status: true
-          fetch_upstream_icon: true
+          native_status: true
+          disable_with_jj: true
           git_icon: "\uE702" # 
           branch_icon: " "
           rebase_icon: "\uF47F" # 
