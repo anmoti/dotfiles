@@ -63,6 +63,7 @@
 
   programs.oh-my-posh = {
     enable = true;
+    package = pkgs.unstable.oh-my-posh;
     configFile = "~/.config/oh-my-posh/default.omp.yaml";
   };
 }
