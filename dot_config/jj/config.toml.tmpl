@@ -15,6 +15,6 @@ backend = "ssh"
 key = "{{ .identity.signingkey }}"
 backends.ssh.program = "{{ .ssh_signing.program }}"
 
-[git]
-sign-on-push = true
+[revsets]
+git-sign-on-push = "~signed() & mine()"
 {{ end -}}
